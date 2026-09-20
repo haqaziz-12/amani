@@ -12,9 +12,8 @@ const nextConfig: NextConfig = {
         hostname: "**.supabase.in",
       },
     ],
+    unoptimized: true, // Recommended for Cloudflare Pages static output
   },
-  // Cloudflare Pages compatibility
-  output: "standalone",
 };
 
 export default nextConfig;
