@@ -30,7 +30,6 @@ export default function AdminPage() {
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
 
-  // Logo & Hero state
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -119,22 +118,23 @@ export default function AdminPage() {
         .maybeSingle();
 
       if (existing?.id) {
-        const updatePayload =
-          column === "logo_url"
-            ? { logo_url: publicUrl, updated_at: new Date().toISOString() }
-            : { hero_image_url: publicUrl, updated_at: new Date().toISOString() };
-
-        await supabase
-          .from("site_settings")
-          .update(updatePayload)
-          .eq("id", existing.id);
+        if (column === "logo_url") {
+          await supabase
+            .from("site_settings")
+            .update({ logo_url: publicUrl, updated_at: new Date().toISOString() } as any)
+            .eq("id", existing.id);
+        } else {
+          await supabase
+            .from("site_settings")
+            .update({ hero_image_url: publicUrl, updated_at: new Date().toISOString() } as any)
+            .eq("id", existing.id);
+        }
       } else {
-        const insertPayload =
-          column === "logo_url"
-            ? { logo_url: publicUrl }
-            : { hero_image_url: publicUrl };
-
-        await supabase.from("site_settings").insert(insertPayload);
+        if (column === "logo_url") {
+          await supabase.from("site_settings").insert({ logo_url: publicUrl } as any);
+        } else {
+          await supabase.from("site_settings").insert({ hero_image_url: publicUrl } as any);
+        }
       }
 
       setUrl(publicUrl);
@@ -169,7 +169,6 @@ export default function AdminPage() {
     );
   }
 
-  // LOGIN
   if (!user) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center bg-background px-4">
@@ -217,7 +216,6 @@ export default function AdminPage() {
     );
   }
 
-  // DASHBOARD + TABS
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="bg-white border-b border-border px-4 md:px-6 py-4 flex items-center justify-between">
@@ -235,7 +233,6 @@ export default function AdminPage() {
       </header>
 
       <div className="container-wide py-8 px-4">
-        {/* Tabs */}
         <div className="flex flex-wrap gap-2 mb-8">
           {[
             { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard },
@@ -261,7 +258,6 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* DASHBOARD TAB */}
         {activeTab === "dashboard" && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
@@ -285,7 +281,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* LOGO & HERO TAB */}
         {activeTab === "logo-hero" && (
           <div className="bg-white rounded-2xl border border-border p-6 md:p-8 shadow-sm max-w-3xl">
             <h2 className="font-serif text-2xl font-bold text-brand-dark mb-6">Logo & Hero Image</h2>
@@ -300,7 +295,6 @@ export default function AdminPage() {
             )}
 
             <div className="grid md:grid-cols-2 gap-8">
-              {/* Logo */}
               <div>
                 <h3 className="font-semibold text-brand-dark mb-3">Website Logo</h3>
                 <div className="aspect-square bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center mb-4 overflow-hidden">
@@ -313,28 +307,17 @@ export default function AdminPage() {
                     </div>
                   )}
                 </div>
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoChange}
-                  className="hidden"
-                />
+                <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
                 <button
                   onClick={() => logoInputRef.current?.click()}
                   disabled={uploadingLogo}
                   className="w-full flex items-center justify-center gap-2 bg-brand-red text-white font-medium py-3 rounded-lg hover:bg-brand-red-dark transition-colors disabled:opacity-60"
                 >
-                  {uploadingLogo ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
-                  ) : (
-                    <><Upload className="w-4 h-4" /> Upload New Logo</>
-                  )}
+                  {uploadingLogo ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Upload New Logo</>}
                 </button>
                 <p className="text-xs text-brand-muted mt-2">Recommended: square image (PNG or JPG)</p>
               </div>
 
-              {/* Hero */}
               <div>
                 <h3 className="font-semibold text-brand-dark mb-3">Hero Image</h3>
                 <div className="aspect-video bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center mb-4 overflow-hidden">
@@ -347,23 +330,13 @@ export default function AdminPage() {
                     </div>
                   )}
                 </div>
-                <input
-                  ref={heroInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleHeroChange}
-                  className="hidden"
-                />
+                <input ref={heroInputRef} type="file" accept="image/*" onChange={handleHeroChange} className="hidden" />
                 <button
                   onClick={() => heroInputRef.current?.click()}
                   disabled={uploadingHero}
                   className="w-full flex items-center justify-center gap-2 bg-brand-red text-white font-medium py-3 rounded-lg hover:bg-brand-red-dark transition-colors disabled:opacity-60"
                 >
-                  {uploadingHero ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
-                  ) : (
-                    <><Upload className="w-4 h-4" /> Upload New Hero Image</>
-                  )}
+                  {uploadingHero ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Upload New Hero Image</>}
                 </button>
                 <p className="text-xs text-brand-muted mt-2">Recommended: wide image (16:9)</p>
               </div>
@@ -376,7 +349,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* OTHER TABS - placeholders */}
         {(activeTab === "products" || activeTab === "about" || activeTab === "services" || activeTab === "craftsmanship" || activeTab === "faq") && (
           <div className="bg-white rounded-2xl border border-border p-8 shadow-sm text-center">
             <Package className="w-12 h-12 text-brand-red mx-auto mb-4 opacity-60" />
