@@ -4,6 +4,7 @@
   --brand-red: #AB2225;
   --brand-red-dark: #8B1A1D;
   --brand-gold: #F6EBAA;
+  --brand-gold-dark: #E8D48A;
   --brand-navy: #2F318F;
   --brand-blue: #16A7DC;
   --brand-dark: #2E1114;
@@ -29,11 +30,18 @@
   --color-accent: var(--accent);
   --color-muted: var(--muted);
   --color-border: var(--border);
+
+  /* Brand colors used throughout components */
   --color-brand-red: var(--brand-red);
+  --color-brand-red-dark: var(--brand-red-dark);
   --color-brand-gold: var(--brand-gold);
+  --color-brand-gold-dark: var(--brand-gold-dark);
   --color-brand-navy: var(--brand-navy);
+  --color-brand-blue: var(--brand-blue);
   --color-brand-dark: var(--brand-dark);
   --color-brand-cream: var(--brand-cream);
+  --color-brand-muted: var(--brand-muted);
+
   --font-sans: var(--font-geist-sans);
   --font-serif: var(--font-playfair);
 }
@@ -44,9 +52,23 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
-html { scroll-behavior: smooth; }
-::selection { background: var(--brand-red); color: white; }
+html {
+  scroll-behavior: smooth;
+}
 
-.section-padding { @apply py-16 md:py-24 px-4 sm:px-6 lg:px-8; }
-.container-wide { @apply max-w-7xl mx-auto; }
-.container-narrow { @apply max-w-5xl mx-auto; }
+::selection {
+  background: var(--brand-red);
+  color: white;
+}
+
+.section-padding {
+  @apply py-16 md:py-24 px-4 sm:px-6 lg:px-8;
+}
+
+.container-wide {
+  @apply max-w-7xl mx-auto;
+}
+
+.container-narrow {
+  @apply max-w-5xl mx-auto;
+}
