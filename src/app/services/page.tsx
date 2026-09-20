@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import {
+  Loader2,
+  Palette,
+  RefreshCw,
+  Truck,
+  Home,
+  Package,
+  HeartHandshake,
+  type LucideIcon,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const DEFAULT_TITLE = "Our Services";
@@ -10,22 +19,34 @@ const DEFAULT_INTRO =
   "Beyond ready pieces — we support custom work, restoration, shipping and professional consultation.";
 
 const DEFAULT_BODY = `## Bespoke / Custom Commissions
-Commission a unique carpet made to your exact size, color palette and design. Our master weavers can interpret traditional Afghan motifs, create contemporary geometric compositions, or work from your own inspiration. Typical lead times range from 4 to 12 months depending on dimensions and complexity.
+Commission a unique carpet made to your exact size, color palette and design. Our master weavers can interpret traditional Afghan motifs, create contemporary geometric compositions, or work from your own inspiration. Typical lead times range from 4 to 12 months depending on dimensions and complexity. Ideal for architects, interior designers and private clients seeking a true one-of-a-kind heirloom.
 
 ## Restoration & Repair
-We carefully restore and repair existing Afghan and related handmade carpets. Services include re-knotting damaged areas, fringe and edge repair, foundation strengthening, and professional cleaning guidance.
+We carefully restore and repair existing Afghan and related handmade carpets. Services include re-knotting damaged areas, fringe and edge repair, foundation strengthening, and professional cleaning guidance. Each restoration is assessed individually so that the original character of the piece is preserved as far as possible.
 
 ## Worldwide Shipping
-We arrange secure, insured shipping to destinations around the world. Carpets are carefully rolled, wrapped and packed to protect the pile and structure during transit.
+We arrange secure, insured shipping to destinations around the world. Carpets are carefully rolled, wrapped and packed to protect the pile and structure during transit. Shipping costs and transit times are quoted on a case-by-case basis according to size, destination and preferred service level.
 
 ## Interior & Project Consultation
-We work with interior designers, architects and project teams to select or commission carpets that suit specific spaces — residential, hospitality or commercial.
+We work with interior designers, architects and project teams to select or commission carpets that suit specific spaces — residential, hospitality or commercial. We can provide recommendations on size, scale, color and collection type to complement your overall design vision.
 
 ## Wholesale & Trade
-Trade clients and retailers are welcome to enquire about wholesale arrangements. We can discuss volume, lead times, exclusive designs and ongoing supply.
+Trade clients and retailers are welcome to enquire about wholesale arrangements. We can discuss volume, lead times, exclusive designs and ongoing supply. Please contact us with details of your business and requirements.
 
 ## Care Guidance & After-Sales
-Every carpet is accompanied by clear care instructions tailored to its materials. We remain available after purchase to advise on cleaning, rotation, storage and minor maintenance.`;
+Every carpet is accompanied by clear care instructions tailored to its materials (wool, silk blend, kilim, etc.). We remain available after purchase to advise on cleaning, rotation, storage and minor maintenance so that your carpet ages gracefully for decades.`;
+
+/** Map section title keywords → icon (matches original design) */
+function iconForTitle(title: string): LucideIcon {
+  const t = title.toLowerCase();
+  if (t.includes("bespoke") || t.includes("custom")) return Palette;
+  if (t.includes("restor") || t.includes("repair")) return RefreshCw;
+  if (t.includes("ship")) return Truck;
+  if (t.includes("interior") || t.includes("consult") || t.includes("project")) return Home;
+  if (t.includes("wholesale") || t.includes("trade")) return Package;
+  if (t.includes("care") || t.includes("after")) return HeartHandshake;
+  return Palette;
+}
 
 function parseSections(text: string) {
   const sections: { title: string; body: string }[] = [];
@@ -34,7 +55,6 @@ function parseSections(text: string) {
     const part = parts[i].trim();
     if (!part) continue;
     if (i === 0 && !text.trimStart().startsWith("##")) {
-      // intro paragraph before first heading — skip as section
       continue;
     }
     const nl = part.indexOf("\n");
@@ -81,12 +101,19 @@ export default function ServicesPage() {
             </div>
           ) : sections.length > 0 ? (
             <div className="grid md:grid-cols-2 gap-8">
-              {sections.map((s) => (
-                <div key={s.title} className="bg-white p-8 rounded-2xl border border-border shadow-sm">
-                  <h2 className="font-serif text-xl font-semibold text-brand-dark mb-3">{s.title}</h2>
-                  <p className="text-brand-muted leading-relaxed text-sm whitespace-pre-line">{s.body}</p>
-                </div>
-              ))}
+              {sections.map((s) => {
+                const Icon = iconForTitle(s.title);
+                return (
+                  <div
+                    key={s.title}
+                    className="bg-white p-8 rounded-2xl border border-border shadow-sm"
+                  >
+                    <Icon className="w-8 h-8 text-brand-red mb-4" strokeWidth={1.5} />
+                    <h2 className="font-serif text-xl font-semibold text-brand-dark mb-3">{s.title}</h2>
+                    <p className="text-brand-muted leading-relaxed text-sm whitespace-pre-line">{s.body}</p>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="prose max-w-none text-brand-muted whitespace-pre-line">{body}</div>
