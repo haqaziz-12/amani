@@ -1,47 +1,62 @@
 # Khalaj Amani Carpets
 
-**Authentic Handmade Afghan Carpets** — Enterprise multi-page website.
+**Authentic Handmade Afghan Carpets** — Enterprise multi-page website ready for Cloudflare Pages.
 
-## Tech Stack
-- Next.js 15 (App Router) + TypeScript + Tailwind CSS v4
-- Supabase (Auth + Database + Storage + Realtime) for Admin CMS
-- Deploy target: **Cloudflare Pages**
-- Icons: Lucide React
+## Live Features
+- Home, About, Products (15 detailed items + detail pages), Services, Craftsmanship, FAQ, Contact, Privacy, Terms
+- Responsive design with logo-derived brand colors (#AB2225 red, #F6EBAA gold, #2F318F navy)
+- Floating WhatsApp button + full contact links
+- SEO metadata on every page
+- Admin panel skeleton at `/admin` (Supabase Auth ready)
+- Supabase schema with Realtime support for content management
 
-## Quick Start
+## 1. Add Your Logo
+Place your logo file at:
+```
+public/logo.jpg
+```
+(or update all Image `src` references). You will later be able to change it from the Admin panel once Storage is wired.
 
-1. Clone the repo
-2. `npm install`
-3. Create a Supabase project at https://supabase.com
-4. Copy `.env.example` → `.env.local` and fill keys
-5. Run the SQL in `supabase/schema.sql` in Supabase SQL Editor
-6. `npm run dev`
+## 2. Local Development
+```bash
+npm install
+cp .env.example .env.local
+# Fill NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+npm run dev
+```
 
-## Cloudflare Pages Deploy
+## 3. Supabase Setup
+1. Create a project at https://supabase.com
+2. Open SQL Editor → paste and run the entire contents of `supabase/schema.sql`
+3. Create Storage buckets: `logos`, `heroes`, `products` (public read)
+4. Create an admin user under Authentication → Users
+5. Copy Project URL + anon key into `.env.local` (and into Cloudflare environment variables)
 
-1. Connect this GitHub repo to Cloudflare Pages
-2. Build command: `npx @cloudflare/next-on-pages` or use the official Next.js on Pages adapter
-3. Framework preset: Next.js
-4. Environment variables: add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-5. For full Admin + image uploads you will also need the service role key (server-side only)
+## 4. Deploy to Cloudflare Pages
+1. Go to Cloudflare Dashboard → Pages → Create project → Connect to Git
+2. Select the repository `haqaziz-12/amani`
+3. Build settings:
+   - Framework preset: **Next.js**
+   - Build command: `npx @cloudflare/next-on-pages@1` (or the current recommended adapter)
+   - Build output directory: `.vercel/output/static` (follow latest Cloudflare Next.js docs)
+   - Root directory: `/`
+4. Environment variables (add both):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+5. Deploy
 
-## Features Implemented / Planned
-- Fully responsive design using logo-derived colors (#AB2225 red, #F6EBAA gold, #2F318F navy)
-- Pages: Home, About, Products (15 items), Services, Craftsmanship, FAQ, Contact, Privacy, Terms
-- Admin panel (password protected via Supabase Auth) for real-time content editing
-- Product management with 3 images each (front / back / detail)
-- SEO optimized metadata, Open Graph, structured data ready
-- WhatsApp floating button + all contact links
+> Tip: Check the official Cloudflare docs for “Next.js on Pages” for the exact adapter command at the time you deploy, as it evolves.
 
-## Admin Access
-After setting up Supabase Auth, create an admin user in Authentication → Users.
-Then visit `/admin`.
+## 5. Admin Panel
+Visit `/admin` after deployment.  
+Replace the placeholder login with real Supabase Auth (`supabase.auth.signInWithPassword`).  
+Then implement the CRUD + Storage upload flows using the tables in `supabase/schema.sql`. Changes will appear in real time thanks to Supabase Realtime.
 
-## Contact Info (seeded)
+## Contact (seeded)
 - Email: khalajamani.ltd@hotmail.com
 - Phone / WhatsApp: +93 787 567 967
 - Address: ACMEG 1st, Second Floor, Room #24, Jada e Maiwand, Chaman Huzori, Kabul, Afghanistan
 - Instagram: https://www.instagram.com/khalajamanicarpets
 - Facebook: https://www.facebook.com/share/1C4gJ47quX/
 
-Built for performance, SEO and real-time content control.
+Built for performance, SEO, responsiveness and real-time content control via Supabase.
