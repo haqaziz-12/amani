@@ -77,7 +77,7 @@ export default function ProductsPage() {
                   href={`/products/${product.slug}/`}
                   className="group bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl transition-all duration-300"
                 >
-                  {/* Portrait ratio + object-contain so full carpet is visible */}
+                  {/* Portrait ratio + object-contain so full carpet is visible (original design) */}
                   <div className="aspect-[3/4] relative bg-muted/60 overflow-hidden flex items-center justify-center p-3">
                     {product.image_front ? (
                       <Image
@@ -90,11 +90,11 @@ export default function ProductsPage() {
                       />
                     ) : (
                       <Image
-                        src="/logo.svg"
+                        src="/logo.jpg"
                         alt=""
                         width={90}
                         height={90}
-                        className="opacity-25 group-hover:scale-110 transition-transform duration-500"
+                        className="opacity-25 rounded-full group-hover:scale-110 transition-transform duration-500"
                       />
                     )}
                     {product.collection && (

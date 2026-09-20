@@ -12,22 +12,22 @@ const DEFAULT_INTRO =
 const DEFAULT_BODY = `At Khalaj Amani Carpets we remain committed to traditional hand methods. No machine weaving is used. The result is a living object with texture, slight irregularities and character that only human hands can create.
 
 ## 01 — Design & Planning
-Each carpet begins with a design. Classical medallion, tribal geometric, floral garden or contemporary compositions are drawn and sized according to the intended final dimensions.
+Each carpet begins with a design. Classical medallion, tribal geometric, floral garden or contemporary compositions are drawn and sized according to the intended final dimensions. For bespoke work we refine the design in dialogue with the client before weaving begins.
 
 ## 02 — Material Selection
-We select hand-spun Afghan wool for its resilience, natural lanolin and ability to take dye beautifully. Where silk accents are required, high-quality silk is chosen for its luminous sheen.
+We select hand-spun Afghan wool for its resilience, natural lanolin and ability to take dye beautifully. Where silk accents are required, high-quality silk is chosen for its luminous sheen. Foundations are typically cotton or wool, prepared to the density required by the design.
 
 ## 03 — Natural Dyeing
-Traditional vegetable dyes — madder for reds, indigo for blues, and other natural sources — are used wherever possible.
+Traditional vegetable dyes — madder for reds, indigo for blues, and other natural sources — are used wherever possible. The dyes are applied with care so that colors remain rich and age gracefully over decades.
 
 ## 04 — Hand Knotting
-The carpet is woven on a vertical loom. Each knot is tied by hand by experienced weavers. Knot density (KPSI) varies by collection.
+The carpet is woven on a vertical loom. Each knot is tied by hand by experienced weavers. Knot density (KPSI) varies by collection and design; higher densities allow finer detail. This stage can take many months for a large, fine piece.
 
 ## 05 — Washing & Finishing
-After the weaving is complete the carpet is washed, stretched and finished. Edges are secured, fringes are prepared, and the pile is sheared to an even height.
+After the weaving is complete the carpet is washed, stretched and finished. Edges are secured, fringes are prepared, and the pile is sheared to an even height so the design reads clearly and the surface feels balanced underfoot.
 
 ## 06 — Quality Inspection
-Every carpet is inspected for design fidelity, structural integrity, color consistency and overall finish before it is offered for sale or shipped.`;
+Every carpet is inspected for design fidelity, structural integrity, color consistency and overall finish before it is offered for sale or shipped. Only pieces that meet our standard leave the workshop.`;
 
 function parseSteps(text: string) {
   const steps: { number: string; title: string; body: string }[] = [];
@@ -39,15 +39,29 @@ function parseSteps(text: string) {
     const nl = part.indexOf("\n");
     const heading = (nl === -1 ? part : part.slice(0, nl)).trim();
     const body = nl === -1 ? "" : part.slice(nl).trim();
-    // heading like "01 — Design & Planning"
     const match = heading.match(/^(\d+)\s*[—–-]\s*(.+)$/);
     if (match) {
-      steps.push({ number: match[1], title: match[2], body });
+      steps.push({ number: match[1].padStart(2, "0"), title: match[2], body });
     } else {
-      steps.push({ number: String(steps.length + 1).padStart(2, "0"), title: heading, body });
+      steps.push({
+        number: String(steps.length + 1).padStart(2, "0"),
+        title: heading,
+        body,
+      });
     }
   }
   return steps;
+}
+
+/** Body intro = text before first ## heading, minus the hero subtitle if it was stored in DB */
+function extractIntro(text: string): string {
+  const beforeHeading = text.split(/\n##\s+/)[0]?.trim() || "";
+  // Remove lines that are only the hero subtitle (prevents duplicate on page)
+  const lines = beforeHeading
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l && l !== DEFAULT_INTRO && l.toLowerCase() !== DEFAULT_INTRO.toLowerCase());
+  return lines.join("\n\n").trim();
 }
 
 export default function CraftsmanshipPage() {
@@ -70,7 +84,7 @@ export default function CraftsmanshipPage() {
   }, []);
 
   const steps = parseSteps(body);
-  const intro = body.split(/\n##\s+/)[0]?.trim() || DEFAULT_INTRO;
+  const intro = extractIntro(body);
 
   return (
     <>
@@ -89,11 +103,11 @@ export default function CraftsmanshipPage() {
             </div>
           ) : (
             <>
-              {intro && !intro.startsWith("##") && (
+              {intro ? (
                 <p className="text-brand-muted leading-relaxed text-lg mb-12 text-center whitespace-pre-line">
                   {intro}
                 </p>
-              )}
+              ) : null}
 
               <div className="space-y-10">
                 {steps.map((step) => (
@@ -102,7 +116,9 @@ export default function CraftsmanshipPage() {
                       {step.number}
                     </div>
                     <div>
-                      <h2 className="font-serif text-xl font-semibold text-brand-dark mb-2">{step.title}</h2>
+                      <h2 className="font-serif text-xl font-semibold text-brand-dark mb-2">
+                        {step.title}
+                      </h2>
                       <p className="text-brand-muted leading-relaxed whitespace-pre-line">{step.body}</p>
                     </div>
                   </div>
