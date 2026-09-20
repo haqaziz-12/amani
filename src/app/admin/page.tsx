@@ -53,7 +53,6 @@ export default function AdminPage() {
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
 
-  // Logo & Hero
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -62,9 +61,9 @@ export default function AdminPage() {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const heroInputRef = useRef<HTMLInputElement>(null);
 
-  // Products
   const [products, setProducts] = useState<DbProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [productsError, setProductsError] = useState("");
   const [editingProduct, setEditingProduct] = useState<(typeof emptyProduct & { id?: string }) | null>(null);
   const [savingProduct, setSavingProduct] = useState(false);
   const [productMessage, setProductMessage] = useState("");
@@ -97,8 +96,21 @@ export default function AdminPage() {
 
   const loadProducts = async () => {
     setProductsLoading(true);
-    const { data, error } = await supabase.from("products").select("*").order("sort_order", { ascending: true });
-    if (!error && data) setProducts(data as DbProduct[]);
+    setProductsError("");
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      setProductsError(`Load error: ${error.message} (code: ${error.code})`);
+      setProducts([]);
+    } else {
+      setProducts((data as DbProduct[]) || []);
+      if (!data || data.length === 0) {
+        setProductsError("Query succeeded but returned 0 products. Check Table Editor in Supabase.");
+      }
+    }
     setProductsLoading(false);
   };
 
@@ -120,7 +132,7 @@ export default function AdminPage() {
   };
 
   const uploadFile = async (
-    file: File, bucket: "logos" | "heroes" | "products",
+    file: File, bucket: "logos" | "heroes",
     setUploading: (v: boolean) => void, setUrl: (url: string) => void,
     column: "logo_url" | "hero_image_url"
   ) => {
@@ -304,7 +316,7 @@ export default function AdminPage() {
             { id: "craftsmanship" as Tab, label: "Craftsmanship", icon: Settings },
             { id: "faq" as Tab, label: "FAQ", icon: HelpCircle },
           ].map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            <button key={tab.id} onClick={() => { setActiveTab(tab.id); if (tab.id === "products") loadProducts(); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 activeTab === tab.id ? "bg-brand-red text-white" : "bg-white text-brand-dark border border-border hover:bg-muted"
               }`}>
@@ -313,7 +325,6 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* DASHBOARD */}
         {activeTab === "dashboard" && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
@@ -334,7 +345,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* LOGO & HERO */}
         {activeTab === "logo-hero" && (
           <div className="bg-white rounded-2xl border border-border p-6 md:p-8 shadow-sm max-w-3xl">
             <h2 className="font-serif text-2xl font-bold text-brand-dark mb-6">Logo & Hero Image</h2>
@@ -375,16 +385,27 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* PRODUCTS */}
         {activeTab === "products" && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <h2 className="font-serif text-2xl font-bold text-brand-dark">Products</h2>
-              <button onClick={() => setEditingProduct({ ...emptyProduct })}
-                className="flex items-center gap-2 bg-brand-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-red-dark">
-                <Plus className="w-4 h-4" /> Add Product
-              </button>
+              <div className="flex gap-2">
+                <button onClick={loadProducts}
+                  className="flex items-center gap-2 bg-white border border-border px-4 py-2 rounded-lg text-sm font-medium hover:bg-muted">
+                  Refresh
+                </button>
+                <button onClick={() => setEditingProduct({ ...emptyProduct })}
+                  className="flex items-center gap-2 bg-brand-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-red-dark">
+                  <Plus className="w-4 h-4" /> Add Product
+                </button>
+              </div>
             </div>
+
+            {productsError && (
+              <div className="px-4 py-3 rounded-lg text-sm bg-amber-50 text-amber-800 border border-amber-200">
+                {productsError}
+              </div>
+            )}
 
             {productMessage && (
               <div className={`px-4 py-3 rounded-lg text-sm ${
@@ -392,7 +413,6 @@ export default function AdminPage() {
               }`}>{productMessage}</div>
             )}
 
-            {/* Edit / Add Form */}
             {editingProduct && (
               <div className="bg-white rounded-2xl border border-border p-6 shadow-sm">
                 <h3 className="font-semibold text-lg mb-4">{editingProduct.id ? "Edit Product" : "New Product"}</h3>
@@ -410,7 +430,7 @@ export default function AdminPage() {
                   <div>
                     <label className="block text-sm font-medium mb-1">Size</label>
                     <input value={editingProduct.size} onChange={(e) => setEditingProduct({ ...editingProduct, size: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-lg" placeholder="e.g. 3.20m x 2.40m" />
+                      className="w-full px-3 py-2 border border-border rounded-lg" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Quality</label>
@@ -443,7 +463,6 @@ export default function AdminPage() {
                       rows={4} className="w-full px-3 py-2 border border-border rounded-lg" />
                   </div>
 
-                  {/* Image uploads */}
                   {(["image_front", "image_back", "image_detail"] as const).map((field) => (
                     <div key={field}>
                       <label className="block text-sm font-medium mb-1 capitalize">{field.replace("image_", "")} Image</label>
@@ -471,16 +490,16 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Product list */}
             {productsLoading ? (
               <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-brand-red" /></div>
             ) : products.length === 0 ? (
               <div className="bg-white rounded-2xl border border-border p-8 text-center text-brand-muted">
-                No products in database yet. Click "Add Product" to create one.
-                <p className="text-xs mt-2">(The public site still shows the 15 static products until you add them here)</p>
+                No products loaded.
+                <p className="text-xs mt-2">Use the Refresh button or check the yellow message above for details.</p>
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-border overflow-hidden">
+                <p className="px-4 py-2 text-xs text-brand-muted bg-muted/30">{products.length} products found</p>
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50">
                     <tr>
@@ -514,7 +533,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* PLACEHOLDER TABS */}
         {(activeTab === "about" || activeTab === "services" || activeTab === "craftsmanship" || activeTab === "faq") && (
           <div className="bg-white rounded-2xl border border-border p-8 shadow-sm text-center">
             <FileText className="w-12 h-12 text-brand-red mx-auto mb-4 opacity-60" />
