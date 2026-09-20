@@ -3,11 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Phone, Mail, Instagram, Facebook, MessageCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export function Footer() {
-  const { logo_url } = useSiteSettings();
-  const logoSrc = logo_url || "/logo.svg";
+  const { logo_url, loaded } = useSiteSettings();
+  // Prefer cached/live logo, then static logo.jpg (exists in /public)
+  const logoSrc = logo_url || "/logo.jpg";
 
   return (
     <footer className="bg-brand-dark text-white">
@@ -15,14 +17,19 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <Image
-                src={logoSrc}
-                alt="Khalaj Amani Carpets"
-                width={48}
-                height={48}
-                className="rounded-full object-cover border border-brand-gold"
-                unoptimized={!!logo_url}
-              />
+              <div className="relative w-12 h-12 shrink-0">
+                <Image
+                  src={logoSrc}
+                  alt="Khalaj Amani Carpets"
+                  width={48}
+                  height={48}
+                  className={cn(
+                    "rounded-full object-cover border border-brand-gold transition-opacity duration-300",
+                    loaded || logo_url ? "opacity-100" : "opacity-90"
+                  )}
+                  unoptimized={!!logo_url}
+                />
+              </div>
               <div>
                 <span className="font-serif text-xl font-semibold">Khalaj Amani</span>
                 <span className="block text-xs uppercase tracking-widest text-brand-gold">Carpets</span>
