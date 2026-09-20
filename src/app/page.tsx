@@ -7,6 +7,7 @@ import { ArrowRight, Award, Hand, Globe, Heart, Loader2 } from "lucide-react";
 import { products as staticProducts } from "@/data/products";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 type FeaturedProduct = {
   id: string;
@@ -19,8 +20,9 @@ type FeaturedProduct = {
 };
 
 export default function HomePage() {
-  const { logo_url, hero_image_url } = useSiteSettings();
-  const logoSrc = logo_url || "/logo.svg";
+  const { logo_url, hero_image_url, loaded } = useSiteSettings();
+  // Prefer live/cached logo, then static logo.jpg
+  const logoSrc = logo_url || "/logo.jpg";
   const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
@@ -56,19 +58,30 @@ export default function HomePage() {
   return (
     <>
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-brand-dark">
+        {/* Hero background — uses cached URL immediately so no late swap */}
         <div className="absolute inset-0">
           {hero_image_url ? (
             <Image
               src={hero_image_url}
               alt=""
               fill
-              className="object-cover opacity-40"
+              className={cn(
+                "object-cover transition-opacity duration-500",
+                loaded || hero_image_url ? "opacity-40" : "opacity-0"
+              )}
               priority
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 opacity-20">
-              <Image src="/logo.svg" alt="" fill className="object-cover scale-150 blur-sm" priority />
+            /* Subtle fallback only while we have no hero yet */
+            <div className="absolute inset-0 opacity-15">
+              <Image
+                src="/logo.jpg"
+                alt=""
+                fill
+                className="object-cover scale-150 blur-sm"
+                priority
+              />
             </div>
           )}
         </div>
@@ -81,7 +94,10 @@ export default function HomePage() {
               alt="Khalaj Amani Carpets Logo"
               width={140}
               height={140}
-              className="rounded-full border-4 border-brand-gold shadow-2xl bg-white"
+              className={cn(
+                "rounded-full border-4 border-brand-gold shadow-2xl bg-white transition-opacity duration-300",
+                loaded || logo_url ? "opacity-100" : "opacity-90"
+              )}
               priority
               unoptimized={!!logo_url}
             />
@@ -167,7 +183,7 @@ export default function HomePage() {
                       />
                     ) : (
                       <Image
-                        src="/logo.svg"
+                        src="/logo.jpg"
                         alt=""
                         width={80}
                         height={80}
@@ -230,7 +246,10 @@ export default function HomePage() {
                 alt="Khalaj Amani Carpets"
                 width={280}
                 height={280}
-                className="rounded-full shadow-2xl bg-white"
+                className={cn(
+                  "rounded-full shadow-2xl bg-white transition-opacity duration-300",
+                  loaded || logo_url ? "opacity-100" : "opacity-90"
+                )}
                 unoptimized={!!logo_url}
               />
             </div>
