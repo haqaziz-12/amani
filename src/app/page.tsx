@@ -1,29 +1,90 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Award, Hand, Globe, Heart } from "lucide-react";
-import { products } from "@/data/products";
+import { useEffect, useState } from "react";
+import { ArrowRight, Award, Hand, Globe, Heart, Loader2 } from "lucide-react";
+import { products as staticProducts } from "@/data/products";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { supabase } from "@/lib/supabase";
+
+type FeaturedProduct = {
+  id: string;
+  slug: string;
+  name: string;
+  size: string | null;
+  collection: string | null;
+  price_note: string | null;
+  image_front: string | null;
+};
 
 export default function HomePage() {
-  const featured = products.slice(0, 6);
+  const { logo_url, hero_image_url } = useSiteSettings();
+  const logoSrc = logo_url || "/logo.svg";
+  const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, slug, name, size, collection, price_note, image_front")
+        .eq("is_published", true)
+        .order("sort_order", { ascending: true })
+        .limit(6);
+
+      if (data && data.length > 0) {
+        setFeatured(data as FeaturedProduct[]);
+      } else {
+        setFeatured(
+          staticProducts.slice(0, 6).map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            size: p.size,
+            collection: p.collection,
+            price_note: p.priceNote,
+            image_front: null,
+          }))
+        );
+      }
+      setLoadingProducts(false);
+    };
+    load();
+  }, []);
 
   return (
     <>
       {/* Hero */}
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-brand-dark">
-        <div className="absolute inset-0 opacity-20">
-          <Image src="/logo.svg" alt="" fill className="object-cover scale-150 blur-sm" priority />
+        <div className="absolute inset-0">
+          {hero_image_url ? (
+            <Image
+              src={hero_image_url}
+              alt=""
+              fill
+              className="object-cover opacity-40"
+              priority
+              unoptimized
+            />
+          ) : (
+            <div className="absolute inset-0 opacity-20">
+              <Image src="/logo.svg" alt="" fill className="object-cover scale-150 blur-sm" priority />
+            </div>
+          )}
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/80 via-brand-dark/60 to-brand-dark/90" />
 
         <div className="relative z-10 container-wide text-center px-4 py-20">
           <div className="inline-flex items-center justify-center mb-8">
             <Image
-              src="/logo.svg"
+              src={logoSrc}
               alt="Khalaj Amani Carpets Logo"
               width={140}
               height={140}
               className="rounded-full border-4 border-brand-gold shadow-2xl bg-white"
               priority
+              unoptimized={!!logo_url}
             />
           </div>
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight mb-4">
@@ -38,14 +99,14 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/products"
+              href="/products/"
               className="inline-flex items-center justify-center gap-2 bg-brand-red text-white font-semibold px-8 py-4 rounded-full hover:bg-brand-red-dark transition-colors text-lg"
             >
               Explore Collection
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
-              href="/contact"
+              href="/contact/"
               className="inline-flex items-center justify-center gap-2 bg-transparent border-2 border-brand-gold text-brand-gold font-semibold px-8 py-4 rounded-full hover:bg-brand-gold hover:text-brand-dark transition-colors text-lg"
             >
               Request Enquiry
@@ -85,39 +146,58 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featured.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.slug}`}
-                className="group bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl transition-all duration-300"
-              >
-                <div className="aspect-[4/3] relative bg-muted overflow-hidden flex items-center justify-center">
-                  <Image
-                    src="/logo.svg"
-                    alt=""
-                    width={80}
-                    height={80}
-                    className="opacity-30 group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <span className="absolute top-3 left-3 bg-brand-red text-white text-xs font-medium px-3 py-1 rounded-full">
-                    {product.collection}
-                  </span>
-                </div>
-                <div className="p-5">
-                  <h3 className="font-serif text-lg font-semibold text-brand-dark group-hover:text-brand-red transition-colors mb-1">
-                    {product.name}
-                  </h3>
-                  <p className="text-sm text-brand-muted mb-2">{product.size}</p>
-                  <p className="text-sm text-brand-red font-medium">{product.priceNote}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {loadingProducts ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-brand-red" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featured.map((product) => (
+                <Link
+                  key={product.id}
+                  href={`/products/${product.slug}/`}
+                  className="group bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl transition-all duration-300"
+                >
+                  <div className="aspect-[4/3] relative bg-muted overflow-hidden flex items-center justify-center">
+                    {product.image_front ? (
+                      <Image
+                        src={product.image_front}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        unoptimized
+                      />
+                    ) : (
+                      <Image
+                        src="/logo.svg"
+                        alt=""
+                        width={80}
+                        height={80}
+                        className="opacity-30 group-hover:scale-110 transition-transform duration-500"
+                      />
+                    )}
+                    {product.collection && (
+                      <span className="absolute top-3 left-3 bg-brand-red text-white text-xs font-medium px-3 py-1 rounded-full">
+                        {product.collection}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <h3 className="font-serif text-lg font-semibold text-brand-dark group-hover:text-brand-red transition-colors mb-1">
+                      {product.name}
+                    </h3>
+                    {product.size && <p className="text-sm text-brand-muted mb-2">{product.size}</p>}
+                    <p className="text-sm text-brand-red font-medium">{product.price_note || "Price on Enquiry"}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
 
           <div className="text-center mt-12">
-            <Link href="/products" className="inline-flex items-center gap-2 text-brand-red font-semibold hover:underline">
-              View All 15 Products
+            <Link href="/products/" className="inline-flex items-center gap-2 text-brand-red font-semibold hover:underline">
+              View All Products
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -139,8 +219,8 @@ export default function HomePage() {
               that honor centuries of weaving heritage.
             </p>
             <Link
-              href="/about"
-              className="inline-flex items-center gap-2 bg-brand-gold text-brand-dark font-semibold px-6 py-3 rounded-full hover:bg-brand-gold-dark transition-colors"
+              href="/about/"
+              className="inline-flex items-center gap-2 bg-brand-gold text-brand-dark font-semibold px-6 py-3 rounded-full hover:bg-brand-gold/90 transition-colors"
             >
               Our Story
               <ArrowRight className="w-4 h-4" />
@@ -149,7 +229,14 @@ export default function HomePage() {
           <div className="relative aspect-square max-w-md mx-auto">
             <div className="absolute inset-4 rounded-full border-2 border-brand-gold/40" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Image src="/logo.svg" alt="Khalaj Amani Carpets" width={280} height={280} className="rounded-full shadow-2xl bg-white" />
+              <Image
+                src={logoSrc}
+                alt="Khalaj Amani Carpets"
+                width={280}
+                height={280}
+                className="rounded-full shadow-2xl bg-white"
+                unoptimized={!!logo_url}
+              />
             </div>
           </div>
         </div>
@@ -175,7 +262,7 @@ export default function HomePage() {
               Chat on WhatsApp
             </a>
             <Link
-              href="/contact"
+              href="/contact/"
               className="inline-flex items-center justify-center gap-2 bg-brand-red text-white font-semibold px-8 py-4 rounded-full hover:bg-brand-red-dark transition-colors"
             >
               Send Enquiry
