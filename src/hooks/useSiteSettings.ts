@@ -24,16 +24,24 @@ function getCached(): SiteSettings {
       };
     }
   } catch {
-    // ignore parse errors
+    // ignore
   }
   return { logo_url: null, hero_image_url: null };
 }
 
 export function useSiteSettings() {
-  const [settings, setSettings] = useState<SiteSettings>(getCached);
+  // Logo can safely start from cache (small, changes rarely)
+  const cached = getCached();
+  const [settings, setSettings] = useState<SiteSettings>({
+    logo_url: cached.logo_url,
+    hero_image_url: null, // never paint cached hero until network confirms (avoids old→new flash)
+  });
   const [loaded, setLoaded] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const load = async () => {
       const { data } = await supabase
         .from("site_settings")
@@ -41,22 +49,45 @@ export function useSiteSettings() {
         .limit(1)
         .maybeSingle();
 
-      if (data) {
-        const next = {
-          logo_url: data.logo_url || null,
-          hero_image_url: data.hero_image_url || null,
-        };
-        setSettings(next);
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(next));
-        } catch {
-          // ignore quota / private mode errors
-        }
+      if (cancelled) return;
+
+      const next: SiteSettings = {
+        logo_url: data?.logo_url || null,
+        hero_image_url: data?.hero_image_url || null,
+      };
+
+      setSettings(next);
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
       }
       setLoaded(true);
+
+      // Preload hero so it appears fully ready (no progressive paint flash)
+      if (next.hero_image_url) {
+        const img = new window.Image();
+        img.onload = () => {
+          if (!cancelled) setHeroReady(true);
+        };
+        img.onerror = () => {
+          if (!cancelled) setHeroReady(true); // still show even if error
+        };
+        img.src = next.hero_image_url;
+      } else {
+        setHeroReady(true);
+      }
     };
+
     load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  return { ...settings, loaded };
+  return {
+    ...settings,
+    loaded,
+    heroReady, // true only after network URL is known AND image has been preloaded
+  };
 }

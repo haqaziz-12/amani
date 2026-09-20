@@ -20,8 +20,7 @@ type FeaturedProduct = {
 };
 
 export default function HomePage() {
-  const { logo_url, hero_image_url, loaded } = useSiteSettings();
-  // Prefer live/cached logo, then static logo.jpg
+  const { logo_url, hero_image_url, loaded, heroReady } = useSiteSettings();
   const logoSrc = logo_url || "/logo.jpg";
   const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -58,31 +57,22 @@ export default function HomePage() {
   return (
     <>
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-brand-dark">
-        {/* Hero background — uses cached URL immediately so no late swap */}
+        {/*
+          Hero background strategy:
+          - Solid dark first (never shows old cached hero)
+          - Only after network confirms the current URL AND image is preloaded → fade in
+          This eliminates the old→new flash when you upload a new hero in Admin.
+        */}
         <div className="absolute inset-0">
-          {hero_image_url ? (
+          {hero_image_url && heroReady && (
             <Image
               src={hero_image_url}
               alt=""
               fill
-              className={cn(
-                "object-cover transition-opacity duration-500",
-                loaded || hero_image_url ? "opacity-40" : "opacity-0"
-              )}
+              className="object-cover opacity-40 transition-opacity duration-700"
               priority
               unoptimized
             />
-          ) : (
-            /* Subtle fallback only while we have no hero yet */
-            <div className="absolute inset-0 opacity-15">
-              <Image
-                src="/logo.jpg"
-                alt=""
-                fill
-                className="object-cover scale-150 blur-sm"
-                priority
-              />
-            </div>
           )}
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/80 via-brand-dark/60 to-brand-dark/90" />
