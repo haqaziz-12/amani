@@ -29,15 +29,19 @@ function getCached(): SiteSettings {
   return { logo_url: null, hero_image_url: null };
 }
 
-export function useSiteSettings() {
-  // Logo can safely start from cache (small, changes rarely)
-  const cached = getCached();
-  const [settings, setSettings] = useState<SiteSettings>({
-    logo_url: cached.logo_url,
-    hero_image_url: null, // never paint cached hero until network confirms (avoids old→new flash)
+function preloadImage(url: string): Promise<void> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => resolve();
+    img.onerror = () => resolve(); // still resolve so UI doesn't hang
+    img.src = url;
   });
+}
+
+export function useSiteSettings() {
+  // Start from cache so logo + hero appear instantly on return visits
+  const [settings, setSettings] = useState<SiteSettings>(getCached);
   const [loaded, setLoaded] = useState(false);
-  const [heroReady, setHeroReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,6 +60,15 @@ export function useSiteSettings() {
         hero_image_url: data?.hero_image_url || null,
       };
 
+      const currentHero = settings.hero_image_url;
+
+      // If hero URL changed, preload the new image first, then swap
+      // (prevents old→new flash and also avoids empty burgundy gap)
+      if (next.hero_image_url && next.hero_image_url !== currentHero) {
+        await preloadImage(next.hero_image_url);
+        if (cancelled) return;
+      }
+
       setSettings(next);
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify(next));
@@ -63,31 +76,14 @@ export function useSiteSettings() {
         // ignore
       }
       setLoaded(true);
-
-      // Preload hero so it appears fully ready (no progressive paint flash)
-      if (next.hero_image_url) {
-        const img = new window.Image();
-        img.onload = () => {
-          if (!cancelled) setHeroReady(true);
-        };
-        img.onerror = () => {
-          if (!cancelled) setHeroReady(true); // still show even if error
-        };
-        img.src = next.hero_image_url;
-      } else {
-        setHeroReady(true);
-      }
     };
 
     load();
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return {
-    ...settings,
-    loaded,
-    heroReady, // true only after network URL is known AND image has been preloaded
-  };
+  return { ...settings, loaded };
 }

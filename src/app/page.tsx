@@ -20,7 +20,7 @@ type FeaturedProduct = {
 };
 
 export default function HomePage() {
-  const { logo_url, hero_image_url, loaded, heroReady } = useSiteSettings();
+  const { logo_url, hero_image_url, loaded } = useSiteSettings();
   const logoSrc = logo_url || "/logo.jpg";
   const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -58,22 +58,23 @@ export default function HomePage() {
     <>
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-brand-dark">
         {/*
-          Hero background strategy:
-          - Solid dark first (never shows old cached hero)
-          - Only after network confirms the current URL AND image is preloaded → fade in
-          This eliminates the old→new flash when you upload a new hero in Admin.
+          Hero strategy:
+          - Cached hero_image_url is shown immediately (no burgundy delay on return visits)
+          - When Admin uploads a new hero, the new image is preloaded first, then swapped
+          - First-ever visit (no cache) stays dark until the image arrives
         */}
         <div className="absolute inset-0">
-          {hero_image_url && heroReady && (
+          {hero_image_url ? (
             <Image
+              key={hero_image_url}
               src={hero_image_url}
               alt=""
               fill
-              className="object-cover opacity-40 transition-opacity duration-700"
+              className="object-cover opacity-40"
               priority
               unoptimized
             />
-          )}
+          ) : null}
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/80 via-brand-dark/60 to-brand-dark/90" />
 
