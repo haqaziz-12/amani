@@ -24,6 +24,11 @@ type LiveProduct = {
   image_detail: string | null;
 };
 
+// Required for Next.js static export so all product routes are pre-generated
+export function generateStaticParams() {
+  return staticProducts.map((p) => ({ slug: p.slug }));
+}
+
 export default function ProductDetailPage() {
   const params = useParams();
   const slug = typeof params.slug === "string" ? params.slug : "";
