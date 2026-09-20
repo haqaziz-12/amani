@@ -46,7 +46,6 @@ export default function AdminPage() {
       setLoading(false);
 
       if (session?.user) {
-        // Load current logo & hero from site_settings
         const { data } = await supabase
           .from("site_settings")
           .select("logo_url, hero_image_url")
@@ -112,7 +111,7 @@ export default function AdminPage() {
       const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(fileName);
       const publicUrl = publicData.publicUrl;
 
-      // Save URL to site_settings (upsert)
+      // Save URL to site_settings
       const { data: existing } = await supabase
         .from("site_settings")
         .select("id")
@@ -120,14 +119,22 @@ export default function AdminPage() {
         .maybeSingle();
 
       if (existing?.id) {
+        const updatePayload =
+          column === "logo_url"
+            ? { logo_url: publicUrl, updated_at: new Date().toISOString() }
+            : { hero_image_url: publicUrl, updated_at: new Date().toISOString() };
+
         await supabase
           .from("site_settings")
-          .update({ [column]: publicUrl, updated_at: new Date().toISOString() })
+          .update(updatePayload)
           .eq("id", existing.id);
       } else {
-        await supabase.from("site_settings").insert({
-          [column]: publicUrl,
-        });
+        const insertPayload =
+          column === "logo_url"
+            ? { logo_url: publicUrl }
+            : { hero_image_url: publicUrl };
+
+        await supabase.from("site_settings").insert(insertPayload);
       }
 
       setUrl(publicUrl);
@@ -298,7 +305,7 @@ export default function AdminPage() {
                 <h3 className="font-semibold text-brand-dark mb-3">Website Logo</h3>
                 <div className="aspect-square bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center mb-4 overflow-hidden">
                   {logoUrl ? (
-                    <Image src={logoUrl} alt="Current logo" width={200} height={200} className="object-contain" />
+                    <Image src={logoUrl} alt="Current logo" width={200} height={200} className="object-contain" unoptimized />
                   ) : (
                     <div className="text-center text-brand-muted text-sm">
                       <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-40" />
@@ -332,7 +339,7 @@ export default function AdminPage() {
                 <h3 className="font-semibold text-brand-dark mb-3">Hero Image</h3>
                 <div className="aspect-video bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center mb-4 overflow-hidden">
                   {heroUrl ? (
-                    <Image src={heroUrl} alt="Current hero" width={400} height={225} className="object-cover w-full h-full" />
+                    <Image src={heroUrl} alt="Current hero" width={400} height={225} className="object-cover w-full h-full" unoptimized />
                   ) : (
                     <div className="text-center text-brand-muted text-sm">
                       <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-40" />
@@ -369,7 +376,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* OTHER TABS - placeholders for now */}
+        {/* OTHER TABS - placeholders */}
         {(activeTab === "products" || activeTab === "about" || activeTab === "services" || activeTab === "craftsmanship" || activeTab === "faq") && (
           <div className="bg-white rounded-2xl border border-border p-8 shadow-sm text-center">
             <Package className="w-12 h-12 text-brand-red mx-auto mb-4 opacity-60" />
