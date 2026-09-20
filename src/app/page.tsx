@@ -55,7 +55,6 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Hero */}
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-brand-dark">
         <div className="absolute inset-0">
           {hero_image_url ? (
@@ -115,7 +114,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Trust Bar */}
       <section className="bg-brand-gold/30 border-y border-brand-gold/50">
         <div className="container-wide py-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
@@ -133,7 +131,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured */}
       <section className="section-padding bg-background">
         <div className="container-wide">
           <div className="text-center mb-12">
@@ -158,13 +155,13 @@ export default function HomePage() {
                   href={`/products/${product.slug}/`}
                   className="group bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl transition-all duration-300"
                 >
-                  <div className="aspect-[4/3] relative bg-muted overflow-hidden flex items-center justify-center">
+                  <div className="aspect-[3/4] relative bg-muted/60 overflow-hidden flex items-center justify-center p-3">
                     {product.image_front ? (
                       <Image
                         src={product.image_front}
                         alt={product.name}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="object-contain p-2 group-hover:scale-[1.02] transition-transform duration-500"
                         sizes="(max-width: 768px) 100vw, 33vw"
                         unoptimized
                       />
@@ -178,7 +175,7 @@ export default function HomePage() {
                       />
                     )}
                     {product.collection && (
-                      <span className="absolute top-3 left-3 bg-brand-red text-white text-xs font-medium px-3 py-1 rounded-full">
+                      <span className="absolute top-3 left-3 bg-brand-red text-white text-xs font-medium px-3 py-1 rounded-full z-10">
                         {product.collection}
                       </span>
                     )}
@@ -204,7 +201,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* About Teaser */}
       <section className="section-padding bg-brand-dark text-white">
         <div className="container-wide grid md:grid-cols-2 gap-12 items-center">
           <div>
@@ -242,7 +238,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="section-padding bg-background">
         <div className="container-narrow text-center">
           <h2 className="font-serif text-3xl md:text-4xl font-bold text-brand-dark mb-4">

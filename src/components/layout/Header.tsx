@@ -84,13 +84,14 @@ export function Header() {
         </div>
       </div>
 
+      {/* Mobile menu — tall enough for all links + full WhatsApp button */}
       <div
         className={cn(
-          "lg:hidden overflow-hidden transition-all duration-300 border-t border-border",
-          open ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+          "lg:hidden overflow-y-auto transition-all duration-300 border-t border-border bg-white",
+          open ? "max-h-[min(28rem,calc(100vh-4rem))] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
         )}
       >
-        <nav className="flex flex-col px-4 py-3 bg-white">
+        <nav className="flex flex-col px-4 py-3 pb-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -105,7 +106,7 @@ export function Header() {
             href="https://wa.me/93787567967"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 flex items-center justify-center gap-2 bg-brand-red text-white font-medium px-4 py-3 rounded-full"
+            className="mt-3 mb-2 flex items-center justify-center gap-2 bg-brand-red text-white font-medium px-4 py-3.5 rounded-full shrink-0"
           >
             <MessageCircle className="w-5 h-5" />
             Chat on WhatsApp

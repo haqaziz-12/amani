@@ -110,15 +110,17 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
         <div className="container-wide">
           <div className="grid lg:grid-cols-2 gap-12">
             <div className="space-y-4">
-              <div className="aspect-square relative bg-muted rounded-2xl overflow-hidden flex items-center justify-center border border-border">
+              {/* Main image: tall portrait + contain so full carpet shows */}
+              <div className="aspect-[3/4] sm:aspect-[4/5] relative bg-muted/50 rounded-2xl overflow-hidden flex items-center justify-center border border-border">
                 {frontImg ? (
                   <Image
                     src={frontImg}
                     alt={product.name}
                     fill
-                    className="object-cover"
+                    className="object-contain p-3"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     priority
+                    unoptimized
                   />
                 ) : (
                   <>
@@ -130,9 +132,9 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="aspect-square relative bg-muted rounded-xl overflow-hidden flex items-center justify-center border border-border">
+                <div className="aspect-[3/4] relative bg-muted/50 rounded-xl overflow-hidden flex items-center justify-center border border-border">
                   {backImg ? (
-                    <Image src={backImg} alt="Back view" fill className="object-cover" sizes="25vw" />
+                    <Image src={backImg} alt="Back view" fill className="object-contain p-2" sizes="25vw" unoptimized />
                   ) : (
                     <>
                       <Image src="/logo.svg" alt="Back" width={100} height={100} className="opacity-25" />
@@ -142,9 +144,9 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                     </>
                   )}
                 </div>
-                <div className="aspect-square relative bg-muted rounded-xl overflow-hidden flex items-center justify-center border border-border">
+                <div className="aspect-[3/4] relative bg-muted/50 rounded-xl overflow-hidden flex items-center justify-center border border-border">
                   {detailImg ? (
-                    <Image src={detailImg} alt="Detail view" fill className="object-cover" sizes="25vw" />
+                    <Image src={detailImg} alt="Detail view" fill className="object-contain p-2" sizes="25vw" unoptimized />
                   ) : (
                     <>
                       <Image src="/logo.svg" alt="Detail" width={100} height={100} className="opacity-25" />

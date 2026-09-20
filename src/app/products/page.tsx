@@ -33,7 +33,6 @@ export default function ProductsPage() {
       if (!error && data && data.length > 0) {
         setProducts(data as LiveProduct[]);
       } else {
-        // Fallback to static data if Supabase is empty or unreachable
         setProducts(
           staticProducts.map((p) => ({
             id: p.id,
@@ -78,14 +77,16 @@ export default function ProductsPage() {
                   href={`/products/${product.slug}/`}
                   className="group bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl transition-all duration-300"
                 >
-                  <div className="aspect-[4/3] relative bg-muted overflow-hidden flex items-center justify-center">
+                  {/* Portrait ratio + object-contain so full carpet is visible */}
+                  <div className="aspect-[3/4] relative bg-muted/60 overflow-hidden flex items-center justify-center p-3">
                     {product.image_front ? (
                       <Image
                         src={product.image_front}
                         alt={product.name}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-contain p-2 group-hover:scale-[1.02] transition-transform duration-500"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        unoptimized
                       />
                     ) : (
                       <Image
@@ -97,7 +98,7 @@ export default function ProductsPage() {
                       />
                     )}
                     {product.collection && (
-                      <span className="absolute top-3 left-3 bg-brand-red text-white text-xs font-medium px-3 py-1 rounded-full">
+                      <span className="absolute top-3 left-3 bg-brand-red text-white text-xs font-medium px-3 py-1 rounded-full z-10">
                         {product.collection}
                       </span>
                     )}
