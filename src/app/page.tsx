@@ -54,17 +54,29 @@ export default function HomePage() {
     load();
   }, []);
 
+  // Keep CSS variable in sync when React learns a newer hero URL
+  useEffect(() => {
+    if (hero_image_url && typeof document !== "undefined") {
+      document.documentElement.style.setProperty(
+        "--hero-url",
+        `url("${hero_image_url}")`
+      );
+      document.documentElement.classList.add("has-hero-cache");
+    }
+  }, [hero_image_url]);
+
   return (
     <>
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-brand-dark">
         {/*
-          Hero strategy:
-          - Cached hero_image_url is shown immediately (no burgundy delay on return visits)
-          - When Admin uploads a new hero, the new image is preloaded first, then swapped
-          - First-ever visit (no cache) stays dark until the image arrives
+          Layer 1: CSS background from early script / localStorage
+          → paints BEFORE React (same instant feel as the logo)
+          Layer 2: Next/Image when React is ready (sharp + priority)
         */}
-        <div className="absolute inset-0">
-          {hero_image_url ? (
+        <div className="hero-instant-bg" aria-hidden="true" />
+
+        {hero_image_url && (
+          <div className="absolute inset-0">
             <Image
               key={hero_image_url}
               src={hero_image_url}
@@ -74,8 +86,9 @@ export default function HomePage() {
               priority
               unoptimized
             />
-          ) : null}
-        </div>
+          </div>
+        )}
+
         <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/80 via-brand-dark/60 to-brand-dark/90" />
 
         <div className="relative z-10 container-wide text-center px-4 py-20">

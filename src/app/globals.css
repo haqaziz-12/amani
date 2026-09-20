@@ -19,6 +19,10 @@
   --accent: #2F318F;
   --muted: #F5F0E8;
   --border: #E8DFD0;
+
+  /* Set by early script from localStorage before React runs */
+  --hero-url: none;
+  --logo-url: none;
 }
 
 @theme inline {
@@ -71,4 +75,22 @@ html {
 
 .container-narrow {
   @apply max-w-5xl mx-auto;
+}
+
+/*
+  Instant hero background — painted by the early <script> in layout
+  BEFORE React hydrates. This is what removes the burgundy flash.
+*/
+.hero-instant-bg {
+  position: absolute;
+  inset: 0;
+  background-color: #2e1114;
+  background-image: var(--hero-url);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.4;
+}
+
+html.has-hero-cache .hero-instant-bg {
+  /* already has image from cache — no empty solid color */
 }

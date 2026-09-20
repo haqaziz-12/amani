@@ -48,11 +48,43 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+/**
+ * Runs in the browser BEFORE React hydrates.
+ * Reads the cached hero URL from localStorage and paints it immediately
+ * so the homepage hero never flashes solid burgundy on refresh.
+ */
+const earlyHeroScript = `
+(function () {
+  try {
+    var raw = localStorage.getItem("khalaj_amani_site_settings");
+    if (!raw) return;
+    var parsed = JSON.parse(raw);
+    var hero = parsed && parsed.hero_image_url;
+    var logo = parsed && parsed.logo_url;
+    if (hero) {
+      document.documentElement.style.setProperty("--hero-url", "url(\"" + hero + "\")");
+      document.documentElement.classList.add("has-hero-cache");
+      // Start downloading immediately
+      var img = new Image();
+      img.src = hero;
+    }
+    if (logo) {
+      document.documentElement.style.setProperty("--logo-url", "url(\"" + logo + "\")");
+      var limg = new Image();
+      limg.src = logo;
+    }
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: earlyHeroScript }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased min-h-screen flex flex-col`}
       >
