@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      {/* Hero */}
       <section className="relative bg-brand-dark text-white py-20 md:py-28">
         <div className="container-wide px-4 text-center">
           <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
@@ -24,9 +23,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Story */}
       <section className="section-padding bg-background">
-        <div className="container-narrow prose prose-lg max-w-none">
+        <div className="container-narrow">
           <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
             <div>
               <h2 className="font-serif text-3xl font-bold text-brand-dark mb-6">
@@ -56,11 +54,11 @@ export default function AboutPage() {
               <div className="relative">
                 <div className="absolute -inset-4 rounded-full border-2 border-brand-gold/40" />
                 <Image
-                  src="/logo.jpg"
+                  src="/logo.svg"
                   alt="Khalaj Amani Carpets logo"
                   width={320}
                   height={320}
-                  className="rounded-full shadow-2xl border-4 border-brand-gold"
+                  className="rounded-full shadow-2xl border-4 border-brand-gold bg-white"
                 />
               </div>
             </div>

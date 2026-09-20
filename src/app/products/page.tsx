@@ -33,7 +33,7 @@ export default function ProductsPage() {
               >
                 <div className="aspect-[4/3] relative bg-muted overflow-hidden flex items-center justify-center">
                   <Image
-                    src="/logo.jpg"
+                    src="/logo.svg"
                     alt=""
                     width={90}
                     height={90}

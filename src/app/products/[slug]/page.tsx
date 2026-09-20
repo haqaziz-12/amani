@@ -43,27 +43,25 @@ export default async function ProductDetailPage({ params }: Props) {
       <section className="section-padding bg-background">
         <div className="container-wide">
           <div className="grid lg:grid-cols-2 gap-12">
-            {/* Images */}
             <div className="space-y-4">
               <div className="aspect-square relative bg-muted rounded-2xl overflow-hidden flex items-center justify-center border border-border">
-                <Image src="/logo.jpg" alt={product.name} width={200} height={200} className="opacity-30" />
+                <Image src="/logo.svg" alt={product.name} width={200} height={200} className="opacity-30" />
                 <span className="absolute bottom-4 left-4 bg-black/60 text-white text-xs px-3 py-1 rounded-full">
                   Front View (replace via Admin)
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="aspect-square relative bg-muted rounded-xl overflow-hidden flex items-center justify-center border border-border">
-                  <Image src="/logo.jpg" alt="Back" width={100} height={100} className="opacity-25" />
+                  <Image src="/logo.svg" alt="Back" width={100} height={100} className="opacity-25" />
                   <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">Back</span>
                 </div>
                 <div className="aspect-square relative bg-muted rounded-xl overflow-hidden flex items-center justify-center border border-border">
-                  <Image src="/logo.jpg" alt="Detail" width={100} height={100} className="opacity-25" />
+                  <Image src="/logo.svg" alt="Detail" width={100} height={100} className="opacity-25" />
                   <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">Detail</span>
                 </div>
               </div>
             </div>
 
-            {/* Details */}
             <div>
               <span className="inline-block bg-brand-red/10 text-brand-red text-sm font-medium px-3 py-1 rounded-full mb-3">
                 {product.collection}
