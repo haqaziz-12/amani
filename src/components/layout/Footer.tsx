@@ -10,7 +10,7 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Image
-                src="/logo.jpg"
+                src="/logo.svg"
                 alt="Khalaj Amani Carpets"
                 width={48}
                 height={48}

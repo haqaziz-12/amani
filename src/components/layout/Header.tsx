@@ -24,7 +24,7 @@ export function Header() {
       <div className="container-wide flex items-center justify-between h-16 md:h-20 px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-3 shrink-0">
           <Image
-            src="/logo.jpg"
+            src="/logo.svg"
             alt="Khalaj Amani Carpets"
             width={52}
             height={52}
