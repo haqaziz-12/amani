@@ -10,19 +10,19 @@ export default function HomePage() {
     <>
       {/* Hero */}
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-brand-dark">
-        <div className="absolute inset-0 opacity-25">
-          <Image src="/logo.jpg" alt="" fill className="object-cover scale-150 blur-sm" priority />
+        <div className="absolute inset-0 opacity-20">
+          <Image src="/logo.svg" alt="" fill className="object-cover scale-150 blur-sm" priority />
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/80 via-brand-dark/60 to-brand-dark/90" />
 
         <div className="relative z-10 container-wide text-center px-4 py-20">
           <div className="inline-flex items-center justify-center mb-8">
             <Image
-              src="/logo.jpg"
+              src="/logo.svg"
               alt="Khalaj Amani Carpets Logo"
               width={140}
               height={140}
-              className="rounded-full border-4 border-brand-gold shadow-2xl"
+              className="rounded-full border-4 border-brand-gold shadow-2xl bg-white"
               priority
             />
           </div>
@@ -94,7 +94,7 @@ export default function HomePage() {
               >
                 <div className="aspect-[4/3] relative bg-muted overflow-hidden flex items-center justify-center">
                   <Image
-                    src="/logo.jpg"
+                    src="/logo.svg"
                     alt=""
                     width={80}
                     height={80}
@@ -149,7 +149,7 @@ export default function HomePage() {
           <div className="relative aspect-square max-w-md mx-auto">
             <div className="absolute inset-4 rounded-full border-2 border-brand-gold/40" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Image src="/logo.jpg" alt="Khalaj Amani Carpets" width={280} height={280} className="rounded-full shadow-2xl" />
+              <Image src="/logo.svg" alt="Khalaj Amani Carpets" width={280} height={280} className="rounded-full shadow-2xl bg-white" />
             </div>
           </div>
         </div>
