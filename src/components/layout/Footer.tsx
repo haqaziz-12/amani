@@ -1,8 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Phone, Mail, Instagram, Facebook, MessageCircle } from "lucide-react";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export function Footer() {
+  const { logo_url } = useSiteSettings();
+  const logoSrc = logo_url || "/logo.svg";
+
   return (
     <footer className="bg-brand-dark text-white">
       <div className="container-wide section-padding !py-12 md:!py-16">
@@ -10,11 +16,12 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Image
-                src="/logo.svg"
+                src={logoSrc}
                 alt="Khalaj Amani Carpets"
                 width={48}
                 height={48}
                 className="rounded-full object-cover border border-brand-gold"
+                unoptimized={!!logo_url}
               />
               <div>
                 <span className="font-serif text-xl font-semibold">Khalaj Amani</span>

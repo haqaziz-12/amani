@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Menu, X, Phone, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -18,18 +19,21 @@ const navLinks = [
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const { logo_url } = useSiteSettings();
+  const logoSrc = logo_url || "/logo.svg";
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="container-wide flex items-center justify-between h-16 md:h-20 px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-3 shrink-0">
           <Image
-            src="/logo.svg"
+            src={logoSrc}
             alt="Khalaj Amani Carpets"
             width={52}
             height={52}
             className="rounded-full object-cover border-2 border-brand-gold"
             priority
+            unoptimized={!!logo_url}
           />
           <div className="hidden sm:block">
             <span className="font-serif text-lg md:text-xl font-semibold text-brand-dark tracking-tight">
