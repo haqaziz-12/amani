@@ -30,7 +30,7 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
         setId(data.id);
         setTitle(data.title || "");
         setBody(data.body || "");
-        setImageUrl((data as any).image_url || null);
+        setImageUrl((data as { image_url?: string }).image_url || null);
       } else {
         setId(null);
         setTitle("");
@@ -38,15 +38,15 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
         setImageUrl(null);
       }
 
-      // Fallback: about image also stored on site_settings
-      if (tab === "about" && !(data as any)?.image_url) {
+      if (tab === "about" && !(data as { image_url?: string } | null)?.image_url) {
         const { data: settings } = await supabase
           .from("site_settings")
           .select("*")
           .limit(1)
           .maybeSingle();
-        if ((settings as any)?.about_image_url) {
-          setImageUrl((settings as any).about_image_url);
+        const aboutFromSettings = (settings as { about_image_url?: string } | null)?.about_image_url;
+        if (aboutFromSettings) {
+          setImageUrl(aboutFromSettings);
         }
       }
 
@@ -56,18 +56,16 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
   }, [tab, table]);
 
   const persistAboutImage = async (url: string | null) => {
-    // 1) about_content.image_url (if column exists)
     if (id) {
       const { error } = await supabase
         .from("about_content")
-        .update({ image_url: url, updated_at: new Date().toISOString() } as any)
+        .update({ image_url: url, updated_at: new Date().toISOString() } as Record<string, unknown>)
         .eq("id", id);
       if (error) {
         console.warn("about_content.image_url update:", error.message);
       }
     }
 
-    // 2) Always also store on site_settings (reliable, same as logo)
     const { data: existing } = await supabase
       .from("site_settings")
       .select("id")
@@ -77,15 +75,14 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
     if (existing?.id) {
       const { error } = await supabase
         .from("site_settings")
-        .update({ about_image_url: url, updated_at: new Date().toISOString() } as any)
+        .update({ about_image_url: url, updated_at: new Date().toISOString() } as Record<string, unknown>)
         .eq("id", existing.id);
       if (error) {
-        // Column may not exist yet — try without failing the upload UX
         console.warn("site_settings.about_image_url update:", error.message);
         return error.message;
       }
     } else {
-      await supabase.from("site_settings").insert({ about_image_url: url } as any);
+      await supabase.from("site_settings").insert({ about_image_url: url } as Record<string, unknown>);
     }
     return null;
   };
@@ -108,14 +105,15 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
       const dbErr = await persistAboutImage(url);
       if (dbErr) {
         setMessage(
-          `Image uploaded to storage, but DB save failed: ${dbErr}. Run the SQL below in Supabase, then click Save Content.`
+          `Image uploaded to storage, but DB save failed: ${dbErr}. Run the SQL in the yellow box, then click Save Content.`
         );
       } else {
         setMessage("Image uploaded and saved! Refresh the About page to see it.");
         setTimeout(() => setMessage(""), 5000);
       }
-    } catch (err: any) {
-      setMessage(`Error: ${err.message || "Upload failed"}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      setMessage(`Error: ${msg}`);
     } finally {
       setUploading(false);
     }
@@ -139,33 +137,23 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
       };
 
       if (id) {
-        // Try with image_url; if column missing, retry without it
-        let { error } = await supabase
-          .from(table)
-          .update(
-            tab === "about" ? { ...payload, image_url: imageUrl } : payload
-          as any)
-          .eq("id", id);
+        const updateData: Record<string, unknown> =
+          tab === "about" ? { ...payload, image_url: imageUrl } : payload;
+
+        let { error } = await supabase.from(table).update(updateData).eq("id", id);
 
         if (error && tab === "about" && /image_url/i.test(error.message)) {
-          ({ error } = await supabase.from(table).update(payload as any).eq("id", id));
+          ({ error } = await supabase.from(table).update(payload).eq("id", id));
         }
         if (error) throw error;
       } else {
-        const insertPayload =
+        const insertData: Record<string, unknown> =
           tab === "about" ? { ...payload, image_url: imageUrl } : payload;
-        let { data, error } = await supabase
-          .from(table)
-          .insert(insertPayload as any)
-          .select("id")
-          .single();
+
+        let { data, error } = await supabase.from(table).insert(insertData).select("id").single();
 
         if (error && tab === "about" && /image_url/i.test(error.message)) {
-          ({ data, error } = await supabase
-            .from(table)
-            .insert(payload as any)
-            .select("id")
-            .single());
+          ({ data, error } = await supabase.from(table).insert(payload).select("id").single());
         }
         if (error) throw error;
         if (data) setId(data.id);
@@ -177,8 +165,9 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
 
       setMessage("Saved successfully! Hard-refresh the public About page.");
       setTimeout(() => setMessage(""), 4000);
-    } catch (err: any) {
-      setMessage(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Save failed";
+      setMessage(`Error: ${msg}`);
     } finally {
       setSaving(false);
     }
