@@ -134,11 +134,8 @@ export default function ServicesPage() {
                   key={s.title}
                   className="bg-white p-8 rounded-2xl border border-border shadow-sm"
                 >
-                  <s.icon
-                    className="w-10 h-10 text-brand-red mb-4"
-                    strokeWidth={2.5}
-                    absoluteStrokeWidth
-                  />
+                  {/* Same weight as About page icons */}
+                  <s.icon className="w-8 h-8 text-brand-red mb-3" strokeWidth={2} />
                   <h2 className="font-serif text-xl font-semibold text-brand-dark mb-3">{s.title}</h2>
                   <p className="text-brand-muted leading-relaxed text-sm">{s.description}</p>
                 </div>
