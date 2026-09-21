@@ -60,30 +60,46 @@ export default function AboutPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
+      // Use select(*) so a missing image_url column does not break the whole query
+      const { data, error } = await supabase
         .from("about_content")
-        .select("title, body, image_url")
+        .select("*")
         .limit(1)
         .maybeSingle();
-      if (data?.title) setPageTitle(data.title);
-      if (data?.image_url) setAboutImage(data.image_url);
-      if (data?.body) {
-        const rootsSec =
-          extractSection(data.body, "Our Roots in Kabul") ||
-          extractSection(data.body, "Our Roots");
-        const workshopSec =
-          extractSection(data.body, "Our Workshop & Process") ||
-          extractSection(data.body, "Our Workshop");
-        if (rootsSec) setRoots(rootsSec);
-        else if (!data.body.includes("##")) setRoots(data.body);
-        if (workshopSec) setWorkshop(workshopSec);
+
+      if (!error && data) {
+        if (data.title) setPageTitle(data.title);
+        if ((data as any).image_url) setAboutImage((data as any).image_url);
+        if (data.body) {
+          const rootsSec =
+            extractSection(data.body, "Our Roots in Kabul") ||
+            extractSection(data.body, "Our Roots");
+          const workshopSec =
+            extractSection(data.body, "Our Workshop & Process") ||
+            extractSection(data.body, "Our Workshop");
+          if (rootsSec) setRoots(rootsSec);
+          else if (!data.body.includes("##")) setRoots(data.body);
+          if (workshopSec) setWorkshop(workshopSec);
+        }
       }
+
+      // Fallback from site_settings (dual-write path)
+      if (!(data as any)?.image_url) {
+        const { data: settings } = await supabase
+          .from("site_settings")
+          .select("*")
+          .limit(1)
+          .maybeSingle();
+        if ((settings as any)?.about_image_url) {
+          setAboutImage((settings as any).about_image_url);
+        }
+      }
+
       setLoading(false);
     };
     load();
   }, []);
 
-  // Prefer dedicated About image; fall back to logo
   const displayImage = aboutImage || logoSrc;
   const isLogoFallback = !aboutImage;
 
@@ -124,15 +140,17 @@ export default function AboutPage() {
                     <div className="absolute -inset-4 rounded-full border-2 border-brand-gold/40" />
                     <div
                       className={`relative overflow-hidden shadow-2xl border-4 border-brand-gold bg-white ${
-                        isLogoFallback ? "rounded-full w-[280px] h-[280px] md:w-[320px] md:h-[320px]" : "rounded-2xl w-full max-w-sm aspect-[4/5]"
+                        isLogoFallback
+                          ? "rounded-full w-[280px] h-[280px] md:w-[320px] md:h-[320px]"
+                          : "rounded-2xl w-full max-w-sm aspect-[4/5]"
                       }`}
                     >
                       <Image
                         src={displayImage}
                         alt={aboutImage ? "Khalaj Amani workshop" : "Khalaj Amani Carpets logo"}
                         fill
-                        className={isLogoFallback ? "object-cover" : "object-cover"}
-                        unoptimized={!!aboutImage || !!logo_url}
+                        className="object-cover"
+                        unoptimized
                         priority
                       />
                     </div>

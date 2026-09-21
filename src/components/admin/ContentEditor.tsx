@@ -30,17 +30,65 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
         setId(data.id);
         setTitle(data.title || "");
         setBody(data.body || "");
-        setImageUrl(data.image_url || null);
+        setImageUrl((data as any).image_url || null);
       } else {
         setId(null);
         setTitle("");
         setBody("");
         setImageUrl(null);
       }
+
+      // Fallback: about image also stored on site_settings
+      if (tab === "about" && !(data as any)?.image_url) {
+        const { data: settings } = await supabase
+          .from("site_settings")
+          .select("*")
+          .limit(1)
+          .maybeSingle();
+        if ((settings as any)?.about_image_url) {
+          setImageUrl((settings as any).about_image_url);
+        }
+      }
+
       setLoading(false);
     };
     load();
   }, [tab, table]);
+
+  const persistAboutImage = async (url: string | null) => {
+    // 1) about_content.image_url (if column exists)
+    if (id) {
+      const { error } = await supabase
+        .from("about_content")
+        .update({ image_url: url, updated_at: new Date().toISOString() } as any)
+        .eq("id", id);
+      if (error) {
+        console.warn("about_content.image_url update:", error.message);
+      }
+    }
+
+    // 2) Always also store on site_settings (reliable, same as logo)
+    const { data: existing } = await supabase
+      .from("site_settings")
+      .select("id")
+      .limit(1)
+      .maybeSingle();
+
+    if (existing?.id) {
+      const { error } = await supabase
+        .from("site_settings")
+        .update({ about_image_url: url, updated_at: new Date().toISOString() } as any)
+        .eq("id", existing.id);
+      if (error) {
+        // Column may not exist yet — try without failing the upload UX
+        console.warn("site_settings.about_image_url update:", error.message);
+        return error.message;
+      }
+    } else {
+      await supabase.from("site_settings").insert({ about_image_url: url } as any);
+    }
+    return null;
+  };
 
   const uploadAboutImage = async (file: File) => {
     setUploading(true);
@@ -48,24 +96,24 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
     try {
       const ext = file.name.split(".").pop() || "jpg";
       const fileName = `about-${Date.now()}.${ext}`;
-      // Reuse products bucket (already public) or logos
       const { error: uploadError } = await supabase.storage
         .from("products")
         .upload(fileName, file, { upsert: true });
       if (uploadError) throw uploadError;
+
       const { data: publicData } = supabase.storage.from("products").getPublicUrl(fileName);
       const url = publicData.publicUrl;
       setImageUrl(url);
 
-      // Persist immediately if row exists
-      if (id) {
-        await supabase
-          .from(table)
-          .update({ image_url: url, updated_at: new Date().toISOString() } as any)
-          .eq("id", id);
+      const dbErr = await persistAboutImage(url);
+      if (dbErr) {
+        setMessage(
+          `Image uploaded to storage, but DB save failed: ${dbErr}. Run the SQL below in Supabase, then click Save Content.`
+        );
+      } else {
+        setMessage("Image uploaded and saved! Refresh the About page to see it.");
+        setTimeout(() => setMessage(""), 5000);
       }
-      setMessage("Image uploaded! Click Save Content to keep title/body changes.");
-      setTimeout(() => setMessage(""), 4000);
     } catch (err: any) {
       setMessage(`Error: ${err.message || "Upload failed"}`);
     } finally {
@@ -75,12 +123,7 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
 
   const removeImage = async () => {
     setImageUrl(null);
-    if (id) {
-      await supabase
-        .from(table)
-        .update({ image_url: null, updated_at: new Date().toISOString() } as any)
-        .eq("id", id);
-    }
+    await persistAboutImage(null);
     setMessage("Image removed.");
     setTimeout(() => setMessage(""), 3000);
   };
@@ -94,24 +137,46 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
         body,
         updated_at: new Date().toISOString(),
       };
-      if (tab === "about") {
-        payload.image_url = imageUrl;
-      }
 
       if (id) {
-        const { error } = await supabase.from(table).update(payload as any).eq("id", id);
+        // Try with image_url; if column missing, retry without it
+        let { error } = await supabase
+          .from(table)
+          .update(
+            tab === "about" ? { ...payload, image_url: imageUrl } : payload
+          as any)
+          .eq("id", id);
+
+        if (error && tab === "about" && /image_url/i.test(error.message)) {
+          ({ error } = await supabase.from(table).update(payload as any).eq("id", id));
+        }
         if (error) throw error;
       } else {
-        const { data, error } = await supabase
+        const insertPayload =
+          tab === "about" ? { ...payload, image_url: imageUrl } : payload;
+        let { data, error } = await supabase
           .from(table)
-          .insert(payload as any)
+          .insert(insertPayload as any)
           .select("id")
           .single();
+
+        if (error && tab === "about" && /image_url/i.test(error.message)) {
+          ({ data, error } = await supabase
+            .from(table)
+            .insert(payload as any)
+            .select("id")
+            .single());
+        }
         if (error) throw error;
         if (data) setId(data.id);
       }
-      setMessage("Saved successfully!");
-      setTimeout(() => setMessage(""), 3000);
+
+      if (tab === "about") {
+        await persistAboutImage(imageUrl);
+      }
+
+      setMessage("Saved successfully! Hard-refresh the public About page.");
+      setTimeout(() => setMessage(""), 4000);
     } catch (err: any) {
       setMessage(`Error: ${err.message}`);
     } finally {
@@ -133,12 +198,23 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
       {message && (
         <div
           className={`mb-4 px-4 py-3 rounded-lg text-sm ${
-            message.startsWith("Error") ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"
+            message.startsWith("Error") || message.includes("failed")
+              ? "bg-red-50 text-red-700"
+              : "bg-green-50 text-green-700"
           }`}
         >
           {message}
         </div>
       )}
+
+      {tab === "about" && (
+        <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900">
+          <strong>Required once:</strong> In Supabase → SQL Editor, run:
+          <pre className="mt-2 p-2 bg-white rounded text-[11px] overflow-x-auto">{`ALTER TABLE about_content ADD COLUMN IF NOT EXISTS image_url text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS about_image_url text;`}</pre>
+        </div>
+      )}
+
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-brand-dark mb-1">Title</label>
@@ -150,26 +226,18 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
           />
         </div>
 
-        {/* About-only image upload */}
         {tab === "about" && (
           <div>
             <label className="block text-sm font-medium text-brand-dark mb-2">
               About page image
             </label>
             <p className="text-xs text-brand-muted mb-3">
-              Shown next to “Our Roots in Kabul”. Upload a workshop photo, team photo, or carpet
-              detail — more valuable than the logo alone.
+              Shown next to “Our Roots in Kabul”. Workshop, team, or carpet photo works best.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 items-start">
               <div className="w-full sm:w-48 aspect-square bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden relative">
                 {imageUrl ? (
-                  <Image
-                    src={imageUrl}
-                    alt="About"
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
+                  <Image src={imageUrl} alt="About" fill className="object-cover" unoptimized />
                 ) : (
                   <div className="text-center text-brand-muted text-sm p-4">
                     <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-40" />
@@ -215,6 +283,9 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
                 )}
               </div>
             </div>
+            {imageUrl && (
+              <p className="mt-2 text-xs text-brand-muted break-all">URL: {imageUrl}</p>
+            )}
           </div>
         )}
 
@@ -244,9 +315,6 @@ export default function ContentEditor({ tab }: { tab: "about" | "services" | "cr
           )}
         </button>
       </div>
-      <p className="mt-4 text-xs text-brand-muted">
-        Content is saved to Supabase and shown on the public page after refresh.
-      </p>
     </div>
   );
 }
