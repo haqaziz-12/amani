@@ -19,28 +19,23 @@ const navLinks = [
 
 export function Header() {
   const [open, setOpen] = useState(false);
-  const { logo_url, loaded } = useSiteSettings();
-  // Prefer cached/live logo, then static logo.jpg (exists in /public), then svg placeholder
+  const { logo_url } = useSiteSettings();
+  // Always prefer uploaded logo; fallback to static logo.jpg (no svg flash)
   const logoSrc = logo_url || "/logo.jpg";
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="container-wide flex items-center justify-between h-16 md:h-20 px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-3 shrink-0">
-          <div className="relative w-[52px] h-[52px] shrink-0">
-            <Image
-              src={logoSrc}
-              alt="Khalaj Amani Carpets"
-              width={52}
-              height={52}
-              className={cn(
-                "rounded-full object-cover border-2 border-brand-gold transition-opacity duration-300",
-                loaded || logo_url ? "opacity-100" : "opacity-90"
-              )}
-              priority
-              unoptimized={!!logo_url}
-            />
-          </div>
+          <Image
+            src={logoSrc}
+            alt="Khalaj Amani Carpets"
+            width={52}
+            height={52}
+            className="rounded-full object-cover border-2 border-brand-gold bg-white"
+            priority
+            unoptimized={!!logo_url}
+          />
           <div className="hidden sm:block">
             <span className="font-serif text-lg md:text-xl font-semibold text-brand-dark tracking-tight">
               Khalaj Amani
@@ -90,7 +85,6 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile menu — tall enough for all links + full WhatsApp button */}
       <div
         className={cn(
           "lg:hidden overflow-y-auto transition-all duration-300 border-t border-border bg-white",
