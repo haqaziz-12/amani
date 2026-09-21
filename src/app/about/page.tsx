@@ -38,9 +38,7 @@ Our name — Khalaj Amani — reflects both heritage and aspiration: the Khalaj 
 
 const DEFAULT_WORKSHOP = `Production takes place in our Kabul workshop under the supervision of experienced masters. Designs range from classical medallion and tribal geometric patterns to more contemporary interpretations and fully bespoke commissions. Clients can request specific sizes, colorways, and motifs. Lead times vary according to size and complexity — typically several months for fine hand-knotted pieces.
 
-We also offer restoration and careful cleaning guidance for existing Afghan and related carpets, helping preserve pieces that already carry history.
-
-Whether you are furnishing a home, specifying for a project, or seeking a single heirloom piece, Khalaj Amani Carpets exists to provide authentic, high-quality handmade carpets with clear provenance and honest craftsmanship.`;
+We also offer restoration and careful cleaning guidance for existing Afghan and related carpets, helping preserve pieces that already carry history.\n\nWhether you are furnishing a home, specifying for a project, or seeking a single heirloom piece, Khalaj Amani Carpets exists to provide authentic, high-quality handmade carpets with clear provenance and honest craftsmanship.`;
 
 function extractSection(body: string, heading: string): string | null {
   const re = new RegExp(`##\\s*${heading}[\\s\\S]*?(?=\\n##\\s|$)`, "i");
@@ -60,48 +58,52 @@ export default function AboutPage() {
 
   useEffect(() => {
     const load = async () => {
-      // Use select(*) so a missing image_url column does not break the whole query
-      const { data, error } = await supabase
-        .from("about_content")
-        .select("*")
-        .limit(1)
-        .maybeSingle();
-
-      if (!error && data) {
-        if (data.title) setPageTitle(data.title);
-        if ((data as any).image_url) setAboutImage((data as any).image_url);
-        if (data.body) {
-          const rootsSec =
-            extractSection(data.body, "Our Roots in Kabul") ||
-            extractSection(data.body, "Our Roots");
-          const workshopSec =
-            extractSection(data.body, "Our Workshop & Process") ||
-            extractSection(data.body, "Our Workshop");
-          if (rootsSec) setRoots(rootsSec);
-          else if (!data.body.includes("##")) setRoots(data.body);
-          if (workshopSec) setWorkshop(workshopSec);
-        }
-      }
-
-      // Fallback from site_settings (dual-write path)
-      if (!(data as any)?.image_url) {
-        const { data: settings } = await supabase
-          .from("site_settings")
+      try {
+        const { data } = await supabase
+          .from("about_content")
           .select("*")
           .limit(1)
           .maybeSingle();
-        if ((settings as any)?.about_image_url) {
-          setAboutImage((settings as any).about_image_url);
-        }
-      }
 
+        if (data) {
+          if (data.title) setPageTitle(String(data.title));
+          const img = (data as { image_url?: string | null }).image_url;
+          if (img) setAboutImage(img);
+
+          if (data.body) {
+            const body = String(data.body);
+            const rootsSec =
+              extractSection(body, "Our Roots in Kabul") ||
+              extractSection(body, "Our Roots");
+            const workshopSec =
+              extractSection(body, "Our Workshop & Process") ||
+              extractSection(body, "Our Workshop");
+            if (rootsSec) setRoots(rootsSec);
+            else if (!body.includes("##")) setRoots(body);
+            if (workshopSec) setWorkshop(workshopSec);
+          }
+        }
+
+        // Dual-read from site_settings
+        if (!(data as { image_url?: string } | null)?.image_url) {
+          const { data: settings } = await supabase
+            .from("site_settings")
+            .select("*")
+            .limit(1)
+            .maybeSingle();
+          const fromSettings = (settings as { about_image_url?: string } | null)?.about_image_url;
+          if (fromSettings) setAboutImage(fromSettings);
+        }
+      } catch {
+        // keep defaults
+      }
       setLoading(false);
     };
     load();
   }, []);
 
   const displayImage = aboutImage || logoSrc;
-  const isLogoFallback = !aboutImage;
+  const isPhoto = Boolean(aboutImage);
 
   return (
     <>
@@ -135,21 +137,28 @@ export default function AboutPage() {
                     </p>
                   ))}
                 </div>
+
+                {/* Fixed dimensions so the image never collapses to a tiny ring */}
                 <div className="flex justify-center">
-                  <div className="relative">
-                    <div className="absolute -inset-4 rounded-full border-2 border-brand-gold/40" />
+                  <div className="relative shrink-0">
+                    <div
+                      className={`absolute -inset-3 border-2 border-brand-gold/40 ${
+                        isPhoto ? "rounded-2xl" : "rounded-full"
+                      }`}
+                    />
                     <div
                       className={`relative overflow-hidden shadow-2xl border-4 border-brand-gold bg-white ${
-                        isLogoFallback
-                          ? "rounded-full w-[280px] h-[280px] md:w-[320px] md:h-[320px]"
-                          : "rounded-2xl w-full max-w-sm aspect-[4/5]"
+                        isPhoto
+                          ? "rounded-2xl w-[260px] h-[320px] sm:w-[300px] sm:h-[380px]"
+                          : "rounded-full w-[260px] h-[260px] sm:w-[300px] sm:h-[300px]"
                       }`}
                     >
                       <Image
                         src={displayImage}
-                        alt={aboutImage ? "Khalaj Amani workshop" : "Khalaj Amani Carpets logo"}
+                        alt={isPhoto ? "Khalaj Amani workshop" : "Khalaj Amani Carpets logo"}
                         fill
                         className="object-cover"
+                        sizes="300px"
                         unoptimized
                         priority
                       />
