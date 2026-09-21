@@ -32,17 +32,45 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
     if (!slug) return;
 
     const load = async () => {
-      const { data, error } = await supabase
+      // Try exact slug, then try a cleaned version (spaces → dashes)
+      const cleaned = slug.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+      let data = null;
+      const { data: exact } = await supabase
         .from("products")
         .select("*")
         .eq("slug", slug)
         .eq("is_published", true)
         .maybeSingle();
 
-      if (!error && data) {
+      if (exact) {
+        data = exact;
+      } else if (cleaned !== slug) {
+        const { data: cleanedRow } = await supabase
+          .from("products")
+          .select("*")
+          .eq("slug", cleaned)
+          .eq("is_published", true)
+          .maybeSingle();
+        data = cleanedRow;
+      }
+
+      // Also try matching by name-ish if slug had spaces in DB
+      if (!data && slug.includes(" ")) {
+        const { data: spaceRow } = await supabase
+          .from("products")
+          .select("*")
+          .eq("slug", slug)
+          .maybeSingle();
+        data = spaceRow;
+      }
+
+      if (data) {
         setProduct(data as LiveProduct);
       } else {
-        const staticOne = staticProducts.find((p) => p.slug === slug);
+        const staticOne = staticProducts.find(
+          (p) => p.slug === slug || p.slug === cleaned
+        );
         if (staticOne) {
           setProduct({
             id: staticOne.id,
@@ -91,6 +119,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const frontImg = product.image_front;
   const backImg = product.image_back;
   const detailImg = product.image_detail;
+  const waText = encodeURIComponent(`Hello, I am interested in: ${product.name}`);
 
   return (
     <>
@@ -110,7 +139,6 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
         <div className="container-wide">
           <div className="grid lg:grid-cols-2 gap-12">
             <div className="space-y-4">
-              {/* Main image: tall portrait + contain so full carpet shows */}
               <div className="aspect-[3/4] sm:aspect-[4/5] relative bg-muted/50 rounded-2xl overflow-hidden flex items-center justify-center border border-border">
                 {frontImg ? (
                   <Image
@@ -124,7 +152,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                   />
                 ) : (
                   <>
-                    <Image src="/logo.svg" alt={product.name} width={200} height={200} className="opacity-30" />
+                    <Image src="/logo.jpg" alt={product.name} width={200} height={200} className="opacity-30" />
                     <span className="absolute bottom-4 left-4 bg-black/60 text-white text-xs px-3 py-1 rounded-full">
                       Front View (upload via Admin)
                     </span>
@@ -137,7 +165,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                     <Image src={backImg} alt="Back view" fill className="object-contain p-2" sizes="25vw" unoptimized />
                   ) : (
                     <>
-                      <Image src="/logo.svg" alt="Back" width={100} height={100} className="opacity-25" />
+                      <Image src="/logo.jpg" alt="Back" width={100} height={100} className="opacity-25" />
                       <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">
                         Back
                       </span>
@@ -149,7 +177,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                     <Image src={detailImg} alt="Detail view" fill className="object-contain p-2" sizes="25vw" unoptimized />
                   ) : (
                     <>
-                      <Image src="/logo.svg" alt="Detail" width={100} height={100} className="opacity-25" />
+                      <Image src="/logo.jpg" alt="Detail" width={100} height={100} className="opacity-25" />
                       <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">
                         Detail
                       </span>
@@ -208,7 +236,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <a
-                  href={`https://wa.me/93787567967?text=${encodeURIComponent(`Hello, I am interested in: ${product.name}`)}`}
+                  href={`https://wa.me/93787567967?text=${waText}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity"

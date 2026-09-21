@@ -7,7 +7,6 @@ import { ArrowRight, Award, Hand, Globe, Heart, Loader2 } from "lucide-react";
 import { products as staticProducts } from "@/data/products";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { supabase } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
 
 type FeaturedProduct = {
   id: string;
@@ -19,8 +18,12 @@ type FeaturedProduct = {
   image_front: string | null;
 };
 
+function productHref(slug: string) {
+  return `/products/detail/?slug=${encodeURIComponent(slug)}`;
+}
+
 export default function HomePage() {
-  const { logo_url, hero_image_url, loaded } = useSiteSettings();
+  const { logo_url, hero_image_url } = useSiteSettings();
   const logoSrc = logo_url || "/logo.jpg";
   const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -54,31 +57,12 @@ export default function HomePage() {
     load();
   }, []);
 
-  // Keep CSS variable in sync when React learns a newer hero URL
-  useEffect(() => {
-    if (hero_image_url && typeof document !== "undefined") {
-      document.documentElement.style.setProperty(
-        "--hero-url",
-        `url("${hero_image_url}")`
-      );
-      document.documentElement.classList.add("has-hero-cache");
-    }
-  }, [hero_image_url]);
-
   return (
     <>
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-brand-dark">
-        {/*
-          Layer 1: CSS background from early script / localStorage
-          → paints BEFORE React (same instant feel as the logo)
-          Layer 2: Next/Image when React is ready (sharp + priority)
-        */}
-        <div className="hero-instant-bg" aria-hidden="true" />
-
-        {hero_image_url && (
-          <div className="absolute inset-0">
+        <div className="absolute inset-0">
+          {hero_image_url ? (
             <Image
-              key={hero_image_url}
               src={hero_image_url}
               alt=""
               fill
@@ -86,9 +70,12 @@ export default function HomePage() {
               priority
               unoptimized
             />
-          </div>
-        )}
-
+          ) : (
+            <div className="absolute inset-0 opacity-20">
+              <Image src="/logo.jpg" alt="" fill className="object-cover scale-150 blur-sm" priority />
+            </div>
+          )}
+        </div>
         <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/80 via-brand-dark/60 to-brand-dark/90" />
 
         <div className="relative z-10 container-wide text-center px-4 py-20">
@@ -98,10 +85,7 @@ export default function HomePage() {
               alt="Khalaj Amani Carpets Logo"
               width={140}
               height={140}
-              className={cn(
-                "rounded-full border-4 border-brand-gold shadow-2xl bg-white transition-opacity duration-300",
-                loaded || logo_url ? "opacity-100" : "opacity-90"
-              )}
+              className="rounded-full border-4 border-brand-gold shadow-2xl bg-white object-cover"
               priority
               unoptimized={!!logo_url}
             />
@@ -172,7 +156,7 @@ export default function HomePage() {
               {featured.map((product) => (
                 <Link
                   key={product.id}
-                  href={`/products/${product.slug}/`}
+                  href={productHref(product.slug)}
                   className="group bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl transition-all duration-300"
                 >
                   <div className="aspect-[3/4] relative bg-muted/60 overflow-hidden flex items-center justify-center p-3">
@@ -187,7 +171,7 @@ export default function HomePage() {
                       />
                     ) : (
                       <Image
-                        src="/logo.jpg"
+                        src="/logo.svg"
                         alt=""
                         width={80}
                         height={80}
@@ -250,10 +234,7 @@ export default function HomePage() {
                 alt="Khalaj Amani Carpets"
                 width={280}
                 height={280}
-                className={cn(
-                  "rounded-full shadow-2xl bg-white transition-opacity duration-300",
-                  loaded || logo_url ? "opacity-100" : "opacity-90"
-                )}
+                className="rounded-full shadow-2xl bg-white object-cover"
                 unoptimized={!!logo_url}
               />
             </div>
