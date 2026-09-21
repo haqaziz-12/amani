@@ -43,7 +43,6 @@ We also offer restoration and careful cleaning guidance for existing Afghan and 
 Whether you are furnishing a home, specifying for a project, or seeking a single heirloom piece, Khalaj Amani Carpets exists to provide authentic, high-quality handmade carpets with clear provenance and honest craftsmanship.`;
 
 function extractSection(body: string, heading: string): string | null {
-  // Try to pull text under a ## heading from Admin body
   const re = new RegExp(`##\\s*${heading}[\\s\\S]*?(?=\\n##\\s|$)`, "i");
   const m = body.match(re);
   if (!m) return null;
@@ -54,14 +53,20 @@ export default function AboutPage() {
   const [pageTitle, setPageTitle] = useState("About Khalaj Amani Carpets");
   const [roots, setRoots] = useState(DEFAULT_ROOTS);
   const [workshop, setWorkshop] = useState(DEFAULT_WORKSHOP);
+  const [aboutImage, setAboutImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { logo_url } = useSiteSettings();
   const logoSrc = logo_url || "/logo.jpg";
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from("about_content").select("title, body").limit(1).maybeSingle();
+      const { data } = await supabase
+        .from("about_content")
+        .select("title, body, image_url")
+        .limit(1)
+        .maybeSingle();
       if (data?.title) setPageTitle(data.title);
+      if (data?.image_url) setAboutImage(data.image_url);
       if (data?.body) {
         const rootsSec =
           extractSection(data.body, "Our Roots in Kabul") ||
@@ -69,7 +74,6 @@ export default function AboutPage() {
         const workshopSec =
           extractSection(data.body, "Our Workshop & Process") ||
           extractSection(data.body, "Our Workshop");
-        // If no structured sections, use first part as roots
         if (rootsSec) setRoots(rootsSec);
         else if (!data.body.includes("##")) setRoots(data.body);
         if (workshopSec) setWorkshop(workshopSec);
@@ -78,6 +82,10 @@ export default function AboutPage() {
     };
     load();
   }, []);
+
+  // Prefer dedicated About image; fall back to logo
+  const displayImage = aboutImage || logoSrc;
+  const isLogoFallback = !aboutImage;
 
   return (
     <>
@@ -100,7 +108,6 @@ export default function AboutPage() {
             </div>
           ) : (
             <>
-              {/* Roots + Logo */}
               <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
                 <div>
                   <h2 className="font-serif text-3xl font-bold text-brand-dark mb-6">
@@ -115,20 +122,24 @@ export default function AboutPage() {
                 <div className="flex justify-center">
                   <div className="relative">
                     <div className="absolute -inset-4 rounded-full border-2 border-brand-gold/40" />
-                    <Image
-                      src={logoSrc}
-                      alt="Khalaj Amani Carpets logo"
-                      width={320}
-                      height={320}
-                      className="rounded-full shadow-2xl border-4 border-brand-gold bg-white object-cover"
-                      unoptimized={!!logo_url}
-                      priority
-                    />
+                    <div
+                      className={`relative overflow-hidden shadow-2xl border-4 border-brand-gold bg-white ${
+                        isLogoFallback ? "rounded-full w-[280px] h-[280px] md:w-[320px] md:h-[320px]" : "rounded-2xl w-full max-w-sm aspect-[4/5]"
+                      }`}
+                    >
+                      <Image
+                        src={displayImage}
+                        alt={aboutImage ? "Khalaj Amani workshop" : "Khalaj Amani Carpets logo"}
+                        fill
+                        className={isLogoFallback ? "object-cover" : "object-cover"}
+                        unoptimized={!!aboutImage || !!logo_url}
+                        priority
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Values — card grid like the old design */}
               <h2 className="font-serif text-3xl font-bold text-brand-dark mb-6">
                 What We Stand For
               </h2>
@@ -147,7 +158,6 @@ export default function AboutPage() {
                 ))}
               </div>
 
-              {/* Workshop */}
               <h2 className="font-serif text-3xl font-bold text-brand-dark mb-6">
                 Our Workshop & Process
               </h2>
