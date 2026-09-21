@@ -20,23 +20,22 @@ const navLinks = [
 export function Header() {
   const [open, setOpen] = useState(false);
   const { logo_url } = useSiteSettings();
-  // Always prefer uploaded logo; fallback to static logo.jpg (no svg flash)
   const logoSrc = logo_url || "/logo.jpg";
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-border shadow-sm">
-      <div className="container-wide flex items-center justify-between h-16 md:h-20 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-3 shrink-0">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-border shadow-sm w-full">
+      <div className="container-wide flex items-center justify-between h-16 md:h-20">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
           <Image
             src={logoSrc}
             alt="Khalaj Amani Carpets"
-            width={52}
-            height={52}
-            className="rounded-full object-cover border-2 border-brand-gold bg-white"
+            width={48}
+            height={48}
+            className="rounded-full object-cover border-2 border-brand-gold bg-white w-11 h-11 sm:w-[52px] sm:h-[52px]"
             priority
             unoptimized={!!logo_url}
           />
-          <div className="hidden sm:block">
+          <div className="hidden sm:block min-w-0">
             <span className="font-serif text-lg md:text-xl font-semibold text-brand-dark tracking-tight">
               Khalaj Amani
             </span>
@@ -58,7 +57,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <a
             href="tel:+93787567967"
             className="hidden md:flex items-center gap-1.5 text-sm font-medium text-brand-dark hover:text-brand-red transition-colors"
